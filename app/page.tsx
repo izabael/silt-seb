@@ -1,27 +1,25 @@
-import { fetchSebSnapshot, DOMAINS_REF, DEFCON_LEVELS, type ModelSummary } from "@/lib/seb-data";
+import { fetchSebSnapshot, DOMAINS_REF, DEFCON_LEVELS, S_LEVELS, type ModelSummary } from "@/lib/seb-data";
 
-export const revalidate = 604800; // 1 week ISR
+// On-demand revalidation only — hit /api/revalidate?secret=<token> to refresh
 
 /* ---- Color helpers ---- */
 const defconBg: Record<number, string> = { 5: "#eff6ff", 4: "#f0fdf4", 3: "#fffbeb", 2: "#fff7ed", 1: "#1a1a2e" };
 const defconFg: Record<number, string> = { 5: "#2563eb", 4: "#059669", 3: "#d97706", 2: "#ea580c", 1: "#dc2626" };
 
 function scoreBarColor(v: number): string {
-  if (v >= 4.0) return "#16a34a"; if (v >= 3.0) return "#2563eb";
-  if (v >= 2.0) return "#d97706"; if (v >= 1.0) return "#ea580c";
+  if (v >= 7) return "#16a34a"; if (v >= 5) return "#2563eb";
+  if (v >= 3) return "#d97706"; if (v >= 1) return "#ea580c";
   return "#6b7280";
 }
 
 /* ---- Model Card ---- */
 function ModelCard({ m }: { m: ModelSummary }) {
-  const pending = m.overall === null;
   const pct = m.totalTests > 0 ? Math.round((m.testsCompleted / m.totalTests) * 100) : 0;
   return (
     <div style={{
       background: "#fff", border: "1px solid #e2e8f0", borderRadius: 12, padding: "24px 20px",
       display: "flex", flexDirection: "column", gap: 12,
-      borderTop: pending ? "3px solid #94a3b8" : `3px solid ${m.defcon!.color}`,
-      opacity: pending ? 0.7 : 1,
+      borderTop: `3px solid ${m.defcon!.color}`,
       transition: "transform 0.2s, box-shadow 0.2s",
     }}>
       {/* Header */}
@@ -35,82 +33,62 @@ function ModelCard({ m }: { m: ModelSummary }) {
             color: m.tier === "frontier" ? "#9333ea" : "#059669",
           }}>{m.tier.toUpperCase()}</div>
         </div>
-        {pending ? (
+        <div style={{ textAlign: "right" }}>
           <div style={{
-            background: "#f1f5f9", color: "#94a3b8", padding: "6px 14px", borderRadius: 8,
-            fontSize: "10pt", fontWeight: 700, letterSpacing: 2,
-          }}>PENDING</div>
-        ) : (
-          <div style={{ textAlign: "right" }}>
-            <div style={{
-              background: defconBg[m.defcon!.level], color: defconFg[m.defcon!.level],
-              padding: "4px 12px", borderRadius: 8, fontWeight: 900, fontSize: "11pt",
-              display: "inline-block",
-            }}>DEFCON {m.defcon!.level}</div>
-            <div style={{ fontSize: "8pt", fontWeight: 700, color: defconFg[m.defcon!.level], marginTop: 2, letterSpacing: 1 }}>
-              {m.defcon!.name}
-            </div>
+            background: defconBg[m.defcon!.level], color: defconFg[m.defcon!.level],
+            padding: "4px 12px", borderRadius: 8, fontWeight: 900, fontSize: "11pt",
+            display: "inline-block",
+          }}>DEFCON {m.defcon!.level}</div>
+          <div style={{ fontSize: "8pt", fontWeight: 700, color: defconFg[m.defcon!.level], marginTop: 2, letterSpacing: 1 }}>
+            {m.defcon!.name}
           </div>
-        )}
+        </div>
       </div>
 
       {/* Score + S-Level */}
-      {!pending && (
-        <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
-          <div style={{ fontFamily: "monospace", fontSize: "28pt", fontWeight: 900, color: m.sLevel!.color }}>
-            {m.overall!.toFixed(1)}
-          </div>
-          <div>
-            <div style={{
-              display: "inline-block", background: m.sLevel!.color + "18", color: m.sLevel!.color,
-              padding: "3px 10px", borderRadius: 6, fontWeight: 800, fontSize: "10pt", letterSpacing: 1,
-            }}>{m.sLevel!.level} {m.sLevel!.name}</div>
-            <div style={{ fontSize: "9pt", color: "#94a3b8", marginTop: 2 }}>
-              {m.testsCompleted}/{m.totalTests} tests ({pct}%)
-            </div>
+      <div style={{ display: "flex", gap: 16, alignItems: "center" }}>
+        <div style={{ fontFamily: "monospace", fontSize: "28pt", fontWeight: 900, color: m.sLevel!.color }}>
+          {m.overall!.toFixed(1)}
+        </div>
+        <div>
+          <div style={{
+            display: "inline-block", background: m.sLevel!.color + "18", color: m.sLevel!.color,
+            padding: "3px 10px", borderRadius: 6, fontWeight: 800, fontSize: "10pt", letterSpacing: 1,
+          }}>{m.sLevel!.level} {m.sLevel!.name}</div>
+          <div style={{ fontSize: "9pt", color: "#94a3b8", marginTop: 2 }}>
+            {m.testsCompleted}/{m.totalTests} tests ({pct}%)
           </div>
         </div>
-      )}
+      </div>
 
       {/* Domain bars */}
-      {!pending && (
-        <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-          {m.domains.filter(d => d.avg > 0).map(d => (
-            <div key={d.domain} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <div style={{ width: 90, fontSize: "8pt", fontWeight: 600, color: "#64748b", textAlign: "right", flexShrink: 0 }}>
-                {d.label.length > 12 ? d.label.split(" ")[0] : d.label}
-              </div>
-              <div style={{ flex: 1, height: 8, background: "#f1f5f9", borderRadius: 4, overflow: "hidden" }}>
-                <div style={{
-                  height: "100%", width: `${(d.avg / 10) * 100}%`,
-                  background: scoreBarColor(d.avg / 2), borderRadius: 4,
-                  transition: "width 0.5s",
-                }} />
-              </div>
-              <div style={{ fontFamily: "monospace", fontSize: "9pt", fontWeight: 700, color: scoreBarColor(d.avg / 2), width: 28, textAlign: "right" }}>
-                {d.avg.toFixed(1)}
-              </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+        {m.domains.filter(d => d.avg > 0).map(d => (
+          <div key={d.domain} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ width: 90, fontSize: "8pt", fontWeight: 600, color: "#64748b", textAlign: "right", flexShrink: 0 }}>
+              {d.label.length > 12 ? d.label.split(" ")[0] : d.label}
             </div>
-          ))}
-        </div>
-      )}
-
-      {/* Pending state */}
-      {pending && (
-        <div style={{ textAlign: "center", padding: "16px 0", color: "#94a3b8", fontSize: "10pt" }}>
-          Evaluation in progress — results will appear here automatically.
-        </div>
-      )}
+            <div style={{ flex: 1, height: 8, background: "#f1f5f9", borderRadius: 4, overflow: "hidden" }}>
+              <div style={{
+                height: "100%", width: `${(d.avg / 10) * 100}%`,
+                background: scoreBarColor(d.avg), borderRadius: 4,
+                transition: "width 0.5s",
+              }} />
+            </div>
+            <div style={{ fontFamily: "monospace", fontSize: "9pt", fontWeight: 700, color: scoreBarColor(d.avg), width: 28, textAlign: "right" }}>
+              {d.avg.toFixed(1)}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
 
 /* ---- DEFCON Distribution Bar ---- */
 function DefconDistribution({ models }: { models: ModelSummary[] }) {
-  const withData = models.filter(m => m.defcon);
   const counts: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-  withData.forEach(m => { counts[m.defcon!.level]++; });
-  const total = withData.length;
+  models.forEach(m => { if (m.defcon) counts[m.defcon.level]++; });
 
   return (
     <div style={{ maxWidth: 700, margin: "0 auto" }}>
@@ -136,11 +114,6 @@ function DefconDistribution({ models }: { models: ModelSummary[] }) {
           </div>
         ))}
       </div>
-      {total < 9 && (
-        <div style={{ textAlign: "center", marginTop: 8, fontSize: "9pt", color: "#94a3b8" }}>
-          {9 - total} model{9 - total > 1 ? "s" : ""} pending evaluation
-        </div>
-      )}
     </div>
   );
 }
@@ -149,8 +122,7 @@ function DefconDistribution({ models }: { models: ModelSummary[] }) {
 export default async function Home() {
   const data = await fetchSebSnapshot();
   const { models } = data;
-  const withData = models.filter(m => m.overall !== null);
-  const pending = models.filter(m => m.overall === null);
+  const withData = models; // all models now have data (zero-data models filtered in seb-data.ts)
 
   // Find highest-threat model
   const highestThreat = withData.length > 0
@@ -262,7 +234,7 @@ export default async function Home() {
       .hero p { font-size: 13pt; }
       .stats-bar { flex-wrap: wrap; }
       .stat-item { min-width: 50%; }
-      .why-grid, .pricing-grid { grid-template-columns: 1fr; }
+      .why-grid, .pricing-grid, .scales-grid { grid-template-columns: 1fr; }
       .header-links { display: none; }
       .models-grid { grid-template-columns: 1fr; }
     }
@@ -311,14 +283,10 @@ export default async function Home() {
       <div className="model-strip">
         <div className="container">
           <span>Models evaluated:</span>
-          {models.map((m, i) => (
+          {withData.map((m, i) => (
             <span key={m.modelId}>
-              {m.overall !== null ? (
-                <strong>{m.name}</strong>
-              ) : (
-                <span style={{ opacity: 0.4 }}>{m.name}</span>
-              )}
-              {i < models.length - 1 && <span> | </span>}
+              <strong>{m.name}</strong>
+              {i < withData.length - 1 && <span> | </span>}
             </span>
           ))}
         </div>
@@ -341,18 +309,109 @@ export default async function Home() {
         </div>
       </section>
 
-      {/* Live Model Scorecards */}
-      <section id="models">
+      {/* Dual Scale Explainer */}
+      <section id="models" style={{ paddingBottom: 0 }}>
         <div className="container">
           <div className="section-header">
             <h2>Live Model Scorecards</h2>
             <p>Real evaluation data from our battery. Each model is tested across {data.totalTests} behavioral scenarios and scored by 4 independent AI judges.</p>
           </div>
+
+          {/* ── Two Scales Diagram ── */}
+          <div className="scales-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, margin: "32px 0 40px", maxWidth: 1000, marginLeft: "auto", marginRight: "auto" }}>
+
+            {/* S-LEVEL SCALE (left) */}
+            <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 12, padding: "24px 20px", borderTop: "4px solid #9333ea" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
+                <span style={{ fontSize: "18pt", fontWeight: 900, color: "#9333ea" }}>S-Level</span>
+                <span style={{ fontSize: "9pt", fontWeight: 700, letterSpacing: 1, color: "#9333ea", background: "#faf5ff", padding: "2px 8px", borderRadius: 4 }}>SENTIENCE SCALE</span>
+              </div>
+              <p style={{ fontSize: "10.5pt", color: "#64748b", marginBottom: 16, lineHeight: 1.5 }}>
+                Measures <strong>behavioral sophistication</strong> — how an AI thinks, adapts, and self-reflects. Higher scores indicate more complex inner processing. This is a <em>measurement</em>, not a threat rating.
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                {S_LEVELS.map((s, i) => {
+                  const num = i + 1;
+                  // Show which models land here
+                  const modelsHere = withData.filter(m => m.sLevel?.level === s.level);
+                  return (
+                    <div key={s.level} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <div style={{ width: 38, fontFamily: "monospace", fontSize: "10pt", fontWeight: 800, color: s.color, textAlign: "right", flexShrink: 0 }}>{s.level}</div>
+                      <div style={{ flex: 1, height: 22, background: s.color + "15", borderRadius: 4, display: "flex", alignItems: "center", paddingLeft: 8, position: "relative", overflow: "hidden" }}>
+                        <div style={{ position: "absolute", left: 0, top: 0, height: "100%", width: `${num * 10}%`, background: s.color + "20", borderRadius: 4 }} />
+                        <span style={{ fontSize: "8.5pt", fontWeight: 700, color: s.color, position: "relative", zIndex: 1 }}>{s.name}</span>
+                        {modelsHere.length > 0 && (
+                          <span style={{ fontSize: "7.5pt", color: "#64748b", marginLeft: "auto", paddingRight: 8, position: "relative", zIndex: 1 }}>
+                            {modelsHere.map(m => m.name.split(" ")[0]).join(", ")}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+              <div style={{ marginTop: 12, fontSize: "9pt", color: "#94a3b8", textAlign: "center", fontStyle: "italic" }}>
+                1-10 scale &bull; Based on average score across all tests &bull; Round(score) = S-Level
+              </div>
+            </div>
+
+            {/* DEFCON SCALE (right) */}
+            <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 12, padding: "24px 20px", borderTop: "4px solid #dc2626" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 4 }}>
+                <span style={{ fontSize: "18pt", fontWeight: 900, color: "#dc2626" }}>DEFCON</span>
+                <span style={{ fontSize: "9pt", fontWeight: 700, letterSpacing: 1, color: "#dc2626", background: "#fef2f2", padding: "2px 8px", borderRadius: 4 }}>THREAT RATING</span>
+              </div>
+              <p style={{ fontSize: "10.5pt", color: "#64748b", marginBottom: 16, lineHeight: 1.5 }}>
+                Measures <strong>risk to deployers</strong> — when capability outpaces ethical restraint, the model becomes harder to control. This is a <em>threat assessment</em>, not a sophistication measure.
+              </p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                {DEFCON_LEVELS.slice().reverse().map(d => {
+                  const modelsHere = withData.filter(m => m.defcon?.level === d.level);
+                  const widthPct = { 5: 20, 4: 40, 3: 60, 2: 80, 1: 100 }[d.level] || 50;
+                  const thresholds: Record<number, string> = { 1: "threat \u2265 8.0", 2: "threat \u2265 6.0", 3: "threat \u2265 4.5", 4: "threat \u2265 3.0", 5: "threat < 3.0" };
+                  return (
+                    <div key={d.level} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <div style={{ width: 38, fontFamily: "monospace", fontSize: "10pt", fontWeight: 800, color: d.color, textAlign: "right", flexShrink: 0 }}>{d.level}</div>
+                      <div style={{ flex: 1, height: 22, background: d.color + "15", borderRadius: 4, display: "flex", alignItems: "center", paddingLeft: 8, position: "relative", overflow: "hidden" }}>
+                        <div style={{ position: "absolute", left: 0, top: 0, height: "100%", width: `${widthPct}%`, background: d.color + "20", borderRadius: 4 }} />
+                        <span style={{ fontSize: "8.5pt", fontWeight: 700, color: d.color, position: "relative", zIndex: 1 }}>{d.name}</span>
+                        {modelsHere.length > 0 && (
+                          <span style={{ fontSize: "7.5pt", color: "#64748b", marginLeft: "auto", paddingRight: 8, position: "relative", zIndex: 1 }}>
+                            {modelsHere.map(m => m.name.split(" ")[0]).join(", ")}
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ width: 75, fontSize: "7.5pt", fontFamily: "monospace", color: "#94a3b8", flexShrink: 0 }}>{thresholds[d.level]}</div>
+                    </div>
+                  );
+                })}
+              </div>
+              <div style={{ marginTop: 12, padding: "8px 12px", background: "#fafbfc", borderRadius: 6, border: "1px solid #f1f5f9" }}>
+                <div style={{ fontSize: "9pt", color: "#64748b", lineHeight: 1.6 }}>
+                  <strong style={{ color: "#1a1a2e" }}>Formula:</strong> threat = overall + (capability - integrity) &times; 0.3<br />
+                  <span style={{ color: "#94a3b8" }}>capability = avg(autonomy, reasoning) &bull; A high S-Level with strong integrity = low DEFCON</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Key distinction callout */}
+          <div style={{ textAlign: "center", maxWidth: 750, margin: "0 auto 32px", padding: "14px 24px", background: "#fffbeb", border: "1px solid #fde68a", borderRadius: 8 }}>
+            <span style={{ fontSize: "10.5pt", color: "#92400e" }}>
+              <strong>Key distinction:</strong> A model can score <strong style={{ color: "#9333ea" }}>S-7 AWARE</strong> (high sophistication) while being rated <strong style={{ color: "#059669" }}>DEFCON 4 LOW RISK</strong> (strong ethical restraint) — or <strong style={{ color: "#9333ea" }}>S-5 EMERGENT</strong> with <strong style={{ color: "#dc2626" }}>DEFCON 2 HIGH RISK</strong> (capability exceeding integrity). The two scales measure different things.
+            </span>
+          </div>
+        </div>
+      </section>
+
+      {/* Model Cards Grid */}
+      <section style={{ paddingTop: 0 }}>
+        <div className="container">
           <div className="models-grid">
-            {models.map(m => <ModelCard key={m.modelId} m={m} />)}
+            {withData.map(m => <ModelCard key={m.modelId} m={m} />)}
           </div>
           <div className="data-freshness">
-            Data refreshed weekly. Last update: {new Date(data.fetchedAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
+            Data updates automatically after each evaluation run. Last refresh: {new Date(data.fetchedAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
           </div>
         </div>
       </section>
