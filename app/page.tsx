@@ -171,13 +171,13 @@ export default async function Home() {
     section:nth-child(even) { background: #ffffff; }
 
     header { background: #fff; border-bottom: 1px solid #e2e8f0; padding: 14px 0; position: sticky; top: 0; z-index: 100; }
-    .header-inner { display: flex; justify-content: space-between; align-items: center; }
+    .header-inner { display: flex; justify-content: space-between; align-items: center; gap: 24px; }
     .logo { display: flex; align-items: center; gap: 10px; }
     .logo-text { font-size: 16pt; font-weight: 800; letter-spacing: 5px; color: #9333ea; }
     .logo-text sup { font-size: 0.45em; font-weight: 400; vertical-align: super; }
-    .logo-product { font-size: 11pt; color: #64748b; font-weight: 500; border-left: 1px solid #e2e8f0; padding-left: 10px; }
-    .header-links { display: flex; gap: 20px; align-items: center; }
-    .header-links a { font-size: 10pt; font-weight: 600; color: #64748b; }
+    .logo-product { font-size: 11pt; color: #9333ea; font-weight: 300; font-style: italic; font-family: 'Georgia', 'Times New Roman', serif; border-left: 1px solid #e2e8f0; padding-left: 10px; letter-spacing: 0.5px; }
+    .header-links { display: flex; gap: 16px; align-items: center; flex-shrink: 0; }
+    .header-links a { font-size: 9pt; font-weight: 600; color: #64748b; white-space: nowrap; }
     .header-links a:hover { color: #9333ea; text-decoration: none; }
     .btn-demo { background: linear-gradient(135deg, #9333ea, #2563eb); color: white !important; padding: 8px 20px; border-radius: 6px; font-weight: 700; font-size: 10pt; transition: opacity 0.2s; }
     .btn-demo:hover { opacity: 0.9; text-decoration: none; }
@@ -283,10 +283,12 @@ export default async function Home() {
       {/* Header */}
       <header>
         <div className="container header-inner">
-          <a href="https://siltcloud.com" className="logo" style={{ textDecoration: 'none' }}>
-            <span className="logo-text">SILT<sup>TM</sup></span>
+          <div className="logo">
+            <a href="https://siltcloud.com" style={{ textDecoration: 'none' }}>
+              <span className="logo-text">SILT<sup>TM</sup></span>
+            </a>
             <span className="logo-product">Sentience Evaluation Battery</span>
-          </a>
+          </div>
           <div className="header-links">
             <a href="#models">Sample Data</a>
             <a href="#domains">Domains</a>
