@@ -18,5 +18,4 @@ ALL TASKS COMPLETE. Session wrapped up.
 7. ✅ All `info@siltcloud.com` → `info@sentientindexlabs.com`
 
 ## Remaining (low priority)
-- S.E.B. header logo should link to silt-seb.com (other repo)
 - Could further polish report (strip remaining markdown artifacts, add charts)
