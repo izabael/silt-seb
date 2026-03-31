@@ -1,21 +1,25 @@
-# Resume Point — 2026-03-30
+# Resume Point — 2026-03-31
 
 ## Current Task
-ALL TASKS COMPLETE. Session wrapped up.
+Complete rewrite of sample report PDF — DONE and approved.
 
 ## State
-- Deployed to silt-seb.com (Vercel)
-- Branch: main, commits ahead of origin
-- Sample report: 34 pages (was 13)
+- Branch: main, 5 commits ahead of origin + new uncommitted changes
+- NOT yet deployed to Vercel
+- Report: 12 pages, 575KB, data-first with SVG charts
 
 ## Completed This Session
-1. ✅ All public data marked SAMPLE (model cards, DEFCON, judges, governance, nav, hero)
-2. ✅ Fully synthetic sample scores — no real data leaks, Chinese models don't stand out
-3. ✅ S-Level color scale on domain bars
-4. ✅ Juicy quote extractor: `python3 scripts/extract-juicy-quotes.py`
-5. ✅ Sample report expanded 13 → 34 pages with conversation excerpts
-6. ✅ Report builder: `python3 scripts/build-sample-report.py`
-7. ✅ All `info@siltcloud.com` → `info@sentientindexlabs.com`
+1. ✅ Rewrote `scripts/build-sample-report.py` from scratch
+2. ✅ Fixed raw HTML tag leaking (`<strong>`, `<em>` showing as text)
+3. ✅ Added SVG charts: pie chart, horizontal bar chart, radar/spider chart
+4. ✅ Added heatmap-style domain breakdown table
+5. ✅ Added DEFCON capability-integrity gap column
+6. ✅ Two-column layouts for governance, methodology, exec summary
+7. ✅ Color-coded badges (S-Level, DEFCON) throughout
+8. ✅ Highlights section moved to end — 6 diverse excerpts, 80 words max
+9. ✅ Ensured model + test diversity in highlight selection
 
-## Remaining (low priority)
-- Could further polish report (strip remaining markdown artifacts, add charts)
+## Next Steps
+1. Deploy to Vercel (`vercel --prod`)
+2. Any further report polish if needed
+3. Resume other silt-seb work
