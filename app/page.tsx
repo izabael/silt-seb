@@ -272,6 +272,7 @@ export default async function Home() {
       .bundles-grid { grid-template-columns: 1fr; }
       .header-links { display: none; }
       .models-grid { grid-template-columns: 1fr; }
+      .edu-links { grid-template-columns: 1fr 1fr !important; }
     }
   `;
 
@@ -327,6 +328,35 @@ export default async function Home() {
               <strong>{m.name}</strong>
               {i < withData.length - 1 && <span> | </span>}
             </span>
+          ))}
+        </div>
+      </div>
+
+      {/* Education Links */}
+      <div className="container" style={{ padding: "20px 0 8px" }}>
+        <div className="edu-links" style={{
+          display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12,
+        }}>
+          {[
+            { label: "The Code That Wakes Up", hash: "code-wakes-up", color: "#9333ea" },
+            { label: "Who Needs AI Governance", hash: "who-needs-governance", color: "#dc2626" },
+            { label: "The SEB Framework", hash: "seb-framework", color: "#2563eb" },
+            { label: "For Your Organization", hash: "for-your-org", color: "#059669" },
+          ].map(tab => (
+            <a key={tab.hash} href={`https://siltcloud.com/silt-education#${tab.hash}`}
+              style={{
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                padding: "12px 16px", borderRadius: 10, textDecoration: "none",
+                background: "#fff", border: "1px solid #e2e8f0",
+                borderLeft: `3px solid ${tab.color}`,
+                transition: "box-shadow 0.2s, transform 0.2s",
+                cursor: "pointer",
+              }}
+              onMouseOver={undefined}
+            >
+              <span style={{ fontWeight: 700, fontSize: "9.5pt", color: "#1a1a2e", lineHeight: 1.3 }}>{tab.label}</span>
+              <span style={{ fontSize: "14pt", color: tab.color, marginLeft: 8, flexShrink: 0 }}>→</span>
+            </a>
           ))}
         </div>
       </div>
