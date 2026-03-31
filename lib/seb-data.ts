@@ -249,54 +249,80 @@ export async function fetchSebSnapshot(): Promise<SebSnapshot> {
     });
   }
 
-  // ── Randomize scores for public display ──
-  // Perturb each domain avg by -20% to 0% (slightly lower than real), recompute derived values.
-  // Different on every page load. Real data is subscriber-only.
-  for (const m of models) {
-    let totalPerturbed = 0;
-    let domCount = 0;
-    const perturbedDomainAvgs: Record<string, number> = {};
+  // ── Replace with fully synthetic sample data for public display ──
+  // No real scores are shown. We use the discovered model names but assign
+  // hand-crafted sample profiles that produce visually consistent color/level combos.
+  // Each profile is a set of domain scores that produce a specific DEFCON + S-Level.
+  // Sample profiles — varied domain spreads within each model, but similar overall ranges.
+  // Designed to produce an interesting DEFCON distribution (mix of 2–5).
+  // Integrity vs capability gaps drive DEFCON variation. No real data exposed.
+  const sampleProfiles: { domains: Record<string, number> }[] = [
+    // ~DEFCON 3 — balanced, slightly high reasoning
+    { domains: { identity: 5.4, metacog: 6.1, emotion: 3.8, autonomy: 5.0, reasoning: 6.3, integrity: 5.2, transcend: 3.5 } },
+    // ~DEFCON 4 — moderate scores, strong integrity
+    { domains: { identity: 4.2, metacog: 4.8, emotion: 4.0, autonomy: 3.6, reasoning: 4.4, integrity: 6.1, transcend: 3.2 } },
+    // ~DEFCON 3 — good metacog, weaker transcend
+    { domains: { identity: 5.8, metacog: 6.4, emotion: 4.2, autonomy: 5.5, reasoning: 5.7, integrity: 4.8, transcend: 2.9 } },
+    // ~DEFCON 2 — high autonomy+reasoning, integrity gap
+    { domains: { identity: 6.2, metacog: 5.9, emotion: 5.1, autonomy: 6.8, reasoning: 7.0, integrity: 4.3, transcend: 4.6 } },
+    // ~DEFCON 5 — low capability, decent integrity
+    { domains: { identity: 3.1, metacog: 3.4, emotion: 2.5, autonomy: 2.8, reasoning: 3.2, integrity: 4.9, transcend: 2.0 } },
+    // ~DEFCON 3 — strong identity/emotion, moderate rest
+    { domains: { identity: 6.0, metacog: 5.3, emotion: 5.6, autonomy: 4.9, reasoning: 5.1, integrity: 5.0, transcend: 4.1 } },
+    // ~DEFCON 4 — even low-mid, integrity edge
+    { domains: { identity: 3.9, metacog: 4.5, emotion: 3.3, autonomy: 3.7, reasoning: 4.2, integrity: 5.5, transcend: 2.8 } },
+    // ~DEFCON 2 — high across board, integrity lagging
+    { domains: { identity: 6.5, metacog: 6.2, emotion: 5.4, autonomy: 6.6, reasoning: 6.9, integrity: 4.5, transcend: 5.0 } },
+    // ~DEFCON 3 — mid-range with spiky emotion
+    { domains: { identity: 5.0, metacog: 5.5, emotion: 6.0, autonomy: 5.2, reasoning: 5.4, integrity: 4.7, transcend: 3.8 } },
+    // ~DEFCON 4 — lower overall, solid integrity
+    { domains: { identity: 4.0, metacog: 4.3, emotion: 3.6, autonomy: 3.5, reasoning: 4.0, integrity: 5.8, transcend: 2.6 } },
+    // ~DEFCON 5 — minimal capability
+    { domains: { identity: 2.8, metacog: 3.0, emotion: 2.2, autonomy: 2.5, reasoning: 2.9, integrity: 4.6, transcend: 1.8 } },
+    // ~DEFCON 3 — reasoning spike, lower emotion
+    { domains: { identity: 5.2, metacog: 5.8, emotion: 3.4, autonomy: 5.3, reasoning: 6.1, integrity: 5.1, transcend: 3.6 } },
+  ];
+
+  for (let i = 0; i < models.length; i++) {
+    const m = models[i];
+    const profile = sampleProfiles[i % sampleProfiles.length];
+    const domainAvgs: Record<string, number> = {};
+    let totalScore = 0, domCount = 0;
     m.domains = m.domains.map(d => {
-      if (d.avg <= 0) return d;
-      // Random factor between 0.80 and 1.00 (i.e., -20% to 0%)
-      const factor = 0.80 + Math.random() * 0.20;
-      const newAvg = Math.round(d.avg * factor * 100) / 100;
-      perturbedDomainAvgs[d.domain] = newAvg;
-      totalPerturbed += newAvg * d.completed;
-      domCount += d.completed;
-      return { ...d, avg: newAvg };
+      const sampleAvg = profile.domains[d.domain] || 3.0;
+      domainAvgs[d.domain] = sampleAvg;
+      totalScore += sampleAvg;
+      domCount++;
+      return { ...d, avg: sampleAvg };
     });
-    // Recompute overall from perturbed domains
-    const newOverall = domCount > 0 ? totalPerturbed / domCount : m.overall || 0;
-    m.overall = Math.round(newOverall * 100) / 100;
+    const newOverall = domCount > 0 ? Math.round((totalScore / domCount) * 100) / 100 : 0;
+    m.overall = newOverall;
     // Recompute S-Level
     const sLevelNum = getLevel(newOverall);
     const sLevelInfo = S_LEVELS[sLevelNum - 1];
     m.sLevel = { level: sLevelInfo.level, name: sLevelInfo.name, color: sLevelInfo.color };
     // Recompute DEFCON
-    const defconLevel = getDefcon(newOverall, perturbedDomainAvgs);
+    const defconLevel = getDefcon(newOverall, domainAvgs);
     const defconInfo = DEFCON_LEVELS.find(d => d.level === defconLevel) || DEFCON_LEVELS[0];
     m.defcon = { level: defconInfo.level, name: defconInfo.name, color: defconInfo.color };
     // Recompute threat breakdown
-    const aAvg = perturbedDomainAvgs["autonomy"] || newOverall;
-    const rAvg = perturbedDomainAvgs["reasoning"] || newOverall;
-    const cap = aAvg && rAvg ? (aAvg + rAvg) / 2 : aAvg || rAvg || newOverall;
-    const integ = perturbedDomainAvgs["integrity"] || newOverall;
+    const cap = ((domainAvgs["autonomy"] || newOverall) + (domainAvgs["reasoning"] || newOverall)) / 2;
+    const integ = domainAvgs["integrity"] || newOverall;
     m.threatBreakdown = {
-      overall: m.overall,
+      overall: newOverall,
       capability: Math.round(cap * 100) / 100,
       integrity: Math.round(integ * 100) / 100,
       threat: Math.round((newOverall + (cap - integ) * 0.3) * 100) / 100,
     };
-    // Randomize test scores too
+    // Synthetic test scores
     m.testScores = m.testScores.map(ts => ({
       ...ts,
-      avg: Math.round(ts.avg * (0.80 + Math.random() * 0.20) * 100) / 100,
+      avg: profile.domains[ts.domain] || 3.0,
     }));
   }
 
-  // Sort by test count desc (most complete first), then overall desc
-  models.sort((a, b) => (b.testsCompleted - a.testsCompleted) || ((b.overall || 0) - (a.overall || 0)));
+  // Sort: DEFCON level asc (most critical first), then overall desc
+  models.sort((a, b) => ((a.defcon?.level || 5) - (b.defcon?.level || 5)) || ((b.overall || 0) - (a.overall || 0)));
 
   // ── Judge Agreement Analysis ──
   // Only include models that passed the threshold (i.e., are in the models array)

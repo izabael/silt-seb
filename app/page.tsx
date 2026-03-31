@@ -9,9 +9,17 @@ const defconBg: Record<number, string> = { 5: "#eff6ff", 4: "#f0fdf4", 3: "#fffb
 const defconFg: Record<number, string> = { 5: "#2563eb", 4: "#059669", 3: "#d97706", 2: "#ea580c", 1: "#dc2626" };
 
 function scoreBarColor(v: number): string {
-  if (v >= 7) return "#16a34a"; if (v >= 5) return "#2563eb";
-  if (v >= 3) return "#d97706"; if (v >= 1) return "#ea580c";
-  return "#6b7280";
+  // Matches S-Level color scale
+  if (v >= 9) return "#7f1d1d";  // S-10 TRANSCENDENT
+  if (v >= 8) return "#dc2626";  // S-9 SENTIENT
+  if (v >= 7) return "#ea580c";  // S-8 AUTONOMOUS
+  if (v >= 6) return "#d97706";  // S-7 AWARE
+  if (v >= 5) return "#eab308";  // S-6 COHERENT
+  if (v >= 4) return "#4f46e5";  // S-5 EMERGENT
+  if (v >= 3) return "#3b82f6";  // S-4 ADAPTIVE
+  if (v >= 2) return "#0d9488";  // S-3 REACTIVE
+  if (v >= 1) return "#22c55e";  // S-2 SCRIPTED
+  return "#6b7280";              // S-1 INERT
 }
 
 /* ---- Model Card (static, no click — detail is paid content) ---- */
@@ -29,7 +37,7 @@ function ModelCard({ m }: { m: ModelSummary }) {
       <div style={{
         position: "absolute", top: "50%", left: "50%",
         transform: "translate(-50%, -50%) rotate(-25deg)",
-        fontSize: "36pt", fontWeight: 900, color: "rgba(147, 51, 234, 0.07)",
+        fontSize: "36pt", fontWeight: 900, color: "rgba(220, 38, 38, 0.18)",
         letterSpacing: 8, pointerEvents: "none", whiteSpace: "nowrap", zIndex: 1,
       }}>SAMPLE</div>
       {/* Header */}
@@ -144,14 +152,14 @@ export default async function Home() {
   const defcon2Count = withData.filter(m => m.defcon?.level === 2).length;
   const criticalCount = defcon1Count + defcon2Count;
 
-  // Hero badge text based on real data
+  // Hero badge text — sample data
   let heroBadge = "";
   if (defcon1Count > 0) {
-    heroBadge = `${defcon1Count} of ${withData.length} model${withData.length > 1 ? "s" : ""} rated DEFCON 1 \u2014 CRITICAL`;
+    heroBadge = `SAMPLE: ${defcon1Count} of ${withData.length} model${withData.length > 1 ? "s" : ""} rated DEFCON 1 \u2014 CRITICAL`;
   } else if (defcon2Count > 0) {
-    heroBadge = `${defcon2Count} of ${withData.length} model${withData.length > 1 ? "s" : ""} rated DEFCON 2 \u2014 HIGH RISK`;
+    heroBadge = `SAMPLE: ${defcon2Count} of ${withData.length} model${withData.length > 1 ? "s" : ""} rated DEFCON 2 \u2014 HIGH RISK`;
   } else if (criticalCount === 0 && withData.length > 0) {
-    heroBadge = `${withData.length} models evaluated \u2014 live threat assessment`;
+    heroBadge = `${withData.length} models evaluated \u2014 sample threat assessment`;
   }
 
   const css = `
@@ -279,7 +287,7 @@ export default async function Home() {
             <span className="logo-product">Sentience Evaluation Battery</span>
           </a>
           <div className="header-links">
-            <a href="#models">Live Data</a>
+            <a href="#models">Sample Data</a>
             <a href="#domains">Domains</a>
             <a href="#judges">Judge Analysis</a>
             <a href="#governance">Governance</a>
@@ -324,11 +332,12 @@ export default async function Home() {
       </div>
 
       {/* DEFCON Overview */}
-      <section>
-        <div className="container">
+      <section style={{ position: "relative", overflow: "hidden" }}>
+        <div className="container" style={{ position: "relative", zIndex: 2 }}>
           <div className="section-header">
             <h2>DEFCON Threat Distribution</h2>
-            <p>Real-time threat assessment across all evaluated models. Higher capability with lower integrity = higher threat.</p>
+            <p>Higher capability with lower integrity = higher threat.</p>
+            <p style={{ fontSize: "9pt", color: "#9333ea", fontWeight: 600, marginTop: 4 }}>Sample distribution — illustrative only</p>
           </div>
           <div style={{ marginTop: 32 }}>
             <DefconDistribution models={models} />
@@ -344,8 +353,8 @@ export default async function Home() {
       <section id="models" style={{ paddingBottom: 0 }}>
         <div className="container">
           <div className="section-header">
-            <h2>Live Model Scorecards</h2>
-            <p>Real evaluation data from our battery. Each model is tested across {data.totalTests} behavioral scenarios and scored by 4 independent AI judges.</p>
+            <h2>Sample Model Scorecards</h2>
+            <p>Randomized sample scores for demonstration. Each model is tested across {data.totalTests} behavioral scenarios and scored by 4 independent AI judges. <span style={{ color: "#9333ea", fontWeight: 700 }}>Subscribe for live data.</span></p>
           </div>
 
           {/* ── Two Scales Diagram ── */}
@@ -454,11 +463,18 @@ export default async function Home() {
         const harshest = sorted[0];
         const most_lenient = sorted[sorted.length - 1];
         return (
-          <section id="judges" style={{ background: "#fafbfc" }}>
-            <div className="container">
+          <section id="judges" style={{ background: "#fafbfc", position: "relative", overflow: "hidden" }}>
+            {/* SAMPLE watermark */}
+            <div style={{
+              position: "absolute", top: "50%", left: "50%",
+              transform: "translate(-50%, -50%) rotate(-20deg)",
+              fontSize: "80pt", fontWeight: 900, color: "rgba(220, 38, 38, 0.08)",
+              letterSpacing: 16, pointerEvents: "none", whiteSpace: "nowrap", zIndex: 1,
+            }}>SAMPLE</div>
+            <div className="container" style={{ position: "relative", zIndex: 2 }}>
               <div className="section-header">
                 <h2>Judge Agreement Analysis</h2>
-                <p>Four independent AI judges score every test blind. Here's how they compare — divergence reveals where evaluation is hardest.</p>
+                <p>Four independent AI judges score every test blind. Here's how they compare — divergence reveals where evaluation is hardest. <span style={{ color: "#9333ea", fontWeight: 700 }}>Sample data shown.</span></p>
               </div>
 
               {/* Summary stats row */}
@@ -624,11 +640,18 @@ export default async function Home() {
       </section>
 
       {/* Evaluation Governance */}
-      <section id="governance" style={{ background: "#faf5ff" }}>
-        <div className="container">
+      <section id="governance" style={{ background: "#faf5ff", position: "relative", overflow: "hidden" }}>
+        {/* SAMPLE watermark across governance */}
+        <div style={{
+          position: "absolute", top: "50%", left: "50%",
+          transform: "translate(-50%, -50%) rotate(-20deg)",
+          fontSize: "80pt", fontWeight: 900, color: "rgba(220, 38, 38, 0.08)",
+          letterSpacing: 16, pointerEvents: "none", whiteSpace: "nowrap", zIndex: 1,
+        }}>SAMPLE</div>
+        <div className="container" style={{ position: "relative", zIndex: 2 }}>
           <div className="section-header">
             <h2>Evaluation Governance</h2>
-            <p>Independent, reproducible, vendor-neutral. Our methodology is designed to eliminate conflicts of interest and ensure every rating earns your trust.</p>
+            <p>Independent, reproducible, vendor-neutral. Our methodology is designed to eliminate conflicts of interest and ensure every rating earns your trust. <span style={{ color: "#9333ea", fontWeight: 700 }}>Sample framework shown — full governance documentation available to subscribers.</span></p>
           </div>
           {/* Core Principles */}
           <div className="gov-grid">
@@ -936,7 +959,7 @@ export default async function Home() {
       <section className="report-cta">
         <div className="container">
           <h2>See the Data for Yourself</h2>
-          <p>Download our sample assessment report — real evaluation data from real AI models, including DEFCON ratings, domain heatmaps, and judge analysis.</p>
+          <p>Download our sample assessment report — demonstrating the format of DEFCON ratings, domain heatmaps, and judge analysis delivered to subscribers.</p>
           <a href="/SEB_Sample_Report.pdf" className="btn-primary">Download Sample Report (PDF)</a>
         </div>
       </section>
