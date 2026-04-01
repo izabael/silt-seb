@@ -282,110 +282,329 @@ export default async function Home() {
 
     .data-freshness { text-align: center; font-size: 9pt; color: #94a3b8; margin-top: 16px; }
 
+    /* ===== DESKTOP ONLY ===== */
     @media (min-width: 769px) {
       .logo { white-space: nowrap; flex-shrink: 0; }
+      .mobile-nav { display: none !important; }
+      .scroll-hint { display: none !important; }
+      details.m-collapse { display: contents; }
+      details.m-collapse > summary { display: none; }
     }
 
+    /* ===== MOBILE ===== */
     @media (max-width: 768px) {
-      /* Header */
+
+      /* -- Global -- */
+      .container { padding: 0 16px; }
+      section { padding: 36px 0; }
+      .section-header h2 { font-size: 20pt; }
+      .section-header p { font-size: 11pt; max-width: 100%; }
+
+      /* -- Header -- */
       .header-links { display: none; }
+      header { padding: 10px 0; }
       .logo { flex-direction: column; align-items: flex-start; gap: 2px; }
       .logo-product { border-left: none; padding-left: 0; font-size: 9pt; }
-      header { padding: 10px 0; }
 
-      /* Hero */
-      .hero { padding: 50px 0 40px; }
-      .hero h1 { font-size: 22pt; line-height: 1.2; }
+      /* -- Mobile Section Nav (sticky pill bar) -- */
+      .mobile-nav {
+        display: flex !important;
+        position: sticky;
+        top: 0;
+        z-index: 99;
+        background: #fff;
+        border-bottom: 1px solid #e2e8f0;
+        overflow-x: auto;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+        gap: 6px;
+        padding: 8px 16px;
+      }
+      .mobile-nav::-webkit-scrollbar { display: none; }
+      .mobile-nav a {
+        white-space: nowrap;
+        padding: 7px 14px;
+        border-radius: 20px;
+        font-size: 9pt;
+        font-weight: 600;
+        background: #f1f5f9;
+        color: #475569;
+        text-decoration: none;
+        min-height: 36px;
+        display: flex;
+        align-items: center;
+        flex-shrink: 0;
+      }
+      .mobile-nav a:hover { background: #e2e8f0; text-decoration: none; }
+
+      /* -- Scroll Hint Indicators -- */
+      .scroll-hint {
+        display: flex !important;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        font-size: 9pt;
+        color: #94a3b8;
+        margin-top: 10px;
+        font-weight: 600;
+        letter-spacing: 0.5px;
+      }
+      .scroll-hint::after { content: ' →'; font-size: 12pt; }
+
+      /* -- Carousel mixin (applied to multiple grids) -- */
+      .m-carousel {
+        display: flex !important;
+        overflow-x: auto !important;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        padding-bottom: 4px;
+      }
+      .m-carousel::-webkit-scrollbar { display: none; }
+      .m-carousel > * {
+        flex: 0 0 82vw !important;
+        scroll-snap-align: start;
+        max-width: 82vw;
+      }
+
+      /* -- Hero -- */
+      .hero { padding: 44px 0 36px; }
+      .hero h1 { font-size: 26pt; line-height: 1.15; }
       .hero p { font-size: 12pt; }
-      .hero-badge { font-size: 8pt; padding: 3px 12px; }
+      .hero-badge { font-size: 8.5pt; padding: 4px 14px; }
       .hero-cta { flex-direction: column; align-items: center; gap: 10px; }
-      .btn-primary, .btn-secondary { width: 100%; max-width: 300px; padding: 14px 24px; font-size: 11pt; text-align: center; }
+      .btn-primary, .btn-secondary {
+        width: 100%; max-width: 320px;
+        padding: 14px 24px; font-size: 11pt;
+        text-align: center; min-height: 48px;
+        display: flex; align-items: center; justify-content: center;
+      }
 
-      /* Stats bar */
-      .stats-bar { flex-wrap: wrap; border-radius: 8px; }
+      /* -- Stats bar -- */
+      .stats-bar { flex-wrap: wrap; border-radius: 8px; margin-top: 28px !important; }
       .stat-item { min-width: 50%; padding: 14px 8px; }
       .stat-num { font-size: 22pt; }
-      .stat-label { font-size: 7pt; letter-spacing: 1px; }
+      .stat-label { font-size: 7.5pt; letter-spacing: 1px; }
 
-      /* Model strip */
-      .model-strip { padding: 12px 0; }
-      .model-strip span { font-size: 8pt; margin: 0 8px; }
+      /* -- Model strip -- */
+      .model-strip { padding: 10px 0; }
+      .model-strip span { font-size: 8pt; margin: 0 6px; }
 
-      /* Sections general */
-      section { padding: 40px 0; }
-      .section-header h2 { font-size: 20pt; }
-      .section-header p { font-size: 11pt; }
-      .container { padding: 0 16px; }
+      /* -- Education links → horizontal scroll -- */
+      .edu-links {
+        display: flex !important;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        gap: 8px !important;
+        padding-bottom: 4px;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+      }
+      .edu-links::-webkit-scrollbar { display: none; }
+      .edu-links > a {
+        flex: 0 0 72vw !important;
+        scroll-snap-align: start;
+      }
 
-      /* Education links */
-      .edu-links { grid-template-columns: 1fr !important; gap: 8px !important; }
-
-      /* Scales diagram */
+      /* -- Scales diagram -- */
       .scales-grid { grid-template-columns: 1fr !important; gap: 16px !important; }
 
-      /* Model cards */
-      .models-grid { grid-template-columns: 1fr !important; }
+      /* -- Model cards → CAROUSEL (the big win) -- */
+      .models-grid {
+        display: flex !important;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        gap: 14px !important;
+        padding-bottom: 8px;
+        scrollbar-width: none;
+        -webkit-overflow-scrolling: touch;
+      }
+      .models-grid::-webkit-scrollbar { display: none; }
+      .models-grid > div {
+        flex: 0 0 85vw !important;
+        scroll-snap-align: start;
+        max-width: 85vw;
+      }
 
-      /* DEFCON distribution */
-      .defcon-bar-container { margin: 0 !important; }
+      /* -- Domains → horizontal scroll -- */
+      .domains-grid {
+        display: flex !important;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        gap: 12px !important;
+        padding-bottom: 4px;
+        scrollbar-width: none;
+      }
+      .domains-grid::-webkit-scrollbar { display: none; }
+      .domains-grid > div {
+        flex: 0 0 78vw !important;
+        scroll-snap-align: start;
+        max-width: 78vw;
+      }
 
-      /* Judge analysis */
-      .judge-stats { grid-template-columns: 1fr 1fr !important; gap: 8px !important; }
-      .judge-breakdown { grid-template-columns: 1fr !important; }
-      .judge-matrix-grid { grid-template-columns: 1fr !important; }
+      /* -- Why Now → horizontal scroll -- */
+      .why-grid {
+        display: flex !important;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        gap: 14px !important;
+        padding-bottom: 4px;
+        scrollbar-width: none;
+      }
+      .why-grid::-webkit-scrollbar { display: none; }
+      .why-grid > div {
+        flex: 0 0 85vw !important;
+        scroll-snap-align: start;
+        max-width: 85vw;
+      }
+      .why-card h3 { font-size: 13pt; }
+      .why-card p, .why-card ul { font-size: 10.5pt; }
 
-      /* Domains */
-      .domains-grid { grid-template-columns: 1fr !important; }
+      /* -- Collapsible sections (details/summary) -- */
+      details.m-collapse {
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        margin-bottom: 16px;
+        overflow: hidden;
+        background: #fff;
+      }
+      details.m-collapse > summary {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 18px 20px;
+        font-weight: 800;
+        font-size: 14pt;
+        cursor: pointer;
+        list-style: none;
+        min-height: 56px;
+        color: #1a1a2e;
+      }
+      details.m-collapse > summary::-webkit-details-marker { display: none; }
+      details.m-collapse > summary::after {
+        content: '+';
+        font-size: 22pt;
+        font-weight: 300;
+        color: #9333ea;
+        flex-shrink: 0;
+        margin-left: 12px;
+      }
+      details.m-collapse[open] > summary::after { content: '−'; }
+      details.m-collapse[open] > summary {
+        border-bottom: 1px solid #e2e8f0;
+      }
+      details.m-collapse > .collapse-body { padding: 20px 16px; }
 
-      /* Why now */
-      .why-grid { grid-template-columns: 1fr !important; }
-      .why-card h3 { font-size: 12pt; }
-      .why-card p, .why-card ul { font-size: 10pt; }
-
-      /* Governance */
-      .gov-grid { grid-template-columns: 1fr !important; }
+      /* -- Governance (inside collapse) -- */
+      .gov-grid {
+        display: flex !important;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        gap: 12px !important;
+        padding-bottom: 4px;
+        scrollbar-width: none;
+      }
+      .gov-grid::-webkit-scrollbar { display: none; }
+      .gov-grid > div {
+        flex: 0 0 78vw !important;
+        scroll-snap-align: start;
+        max-width: 78vw;
+      }
+      .gov-card { padding: 18px; }
+      .gov-card p { font-size: 9.5pt; }
+      .gov-icon { font-size: 24pt; margin-bottom: 8px; }
       .gov-details { grid-template-columns: 1fr !important; }
       .gov-cadence { grid-template-columns: 1fr !important; }
-      .gov-standards-table { font-size: 7.5pt; display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
-      .gov-standards-table th, .gov-standards-table td { padding: 6px 8px !important; white-space: nowrap; }
-      .gov-card { padding: 18px; }
-      .gov-card p { font-size: 9pt; }
-      .gov-icon { font-size: 22pt; margin-bottom: 8px; }
+      .gov-standards-table { font-size: 8.5pt; }
+      .gov-standards-table th, .gov-standards-table td { padding: 8px 10px !important; }
 
-      /* Projections */
-      .proj-grid { grid-template-columns: 1fr !important; }
+      /* -- Judge Analysis (inside collapse) -- */
+      .judge-stats { grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
+      .judge-breakdown {
+        display: flex !important;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        gap: 14px !important;
+        padding-bottom: 4px;
+        scrollbar-width: none;
+      }
+      .judge-breakdown::-webkit-scrollbar { display: none; }
+      .judge-breakdown > div {
+        flex: 0 0 80vw !important;
+        scroll-snap-align: start;
+        max-width: 80vw;
+      }
+
+      /* -- Projections -- */
       .proj-visual { grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
       .proj-stat { padding: 14px 8px; }
       .proj-stat-num { font-size: 22pt; }
-      .proj-stat-label { font-size: 7.5pt; }
+      .proj-stat-label { font-size: 8pt; }
+      .proj-grid {
+        display: flex !important;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        gap: 14px !important;
+        padding-bottom: 4px;
+        scrollbar-width: none;
+      }
+      .proj-grid::-webkit-scrollbar { display: none; }
+      .proj-grid > div {
+        flex: 0 0 82vw !important;
+        scroll-snap-align: start;
+        max-width: 82vw;
+      }
       .proj-cta-row { flex-direction: column; align-items: center; }
-      .proj-cta { width: 100%; max-width: 300px; text-align: center; }
-      .proj-card { padding: 20px 18px; }
+      .proj-cta {
+        width: 100%; max-width: 320px;
+        text-align: center; min-height: 48px;
+        display: flex; align-items: center; justify-content: center;
+      }
       .proj-card h3 { font-size: 12pt; }
-      .proj-card p { font-size: 9.5pt; }
+      .proj-card p { font-size: 10pt; }
       .proj-addons { padding: 16px; }
+      .proj-addons p { font-size: 9.5pt !important; }
 
-      /* Pricing */
+      /* -- Pricing -- */
       .pricing-grid { grid-template-columns: 1fr !important; max-width: 100% !important; }
-      .bundles-grid { grid-template-columns: 1fr !important; }
-      .price-card { padding: 22px 18px; }
-      .price-features li { font-size: 9.5pt; }
-      .price-cta { padding: 14px; font-size: 10pt; }
-
-      /* Enterprise tiers */
+      .bundles-grid {
+        display: flex !important;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        gap: 14px !important;
+        padding-bottom: 8px;
+        scrollbar-width: none;
+      }
+      .bundles-grid::-webkit-scrollbar { display: none; }
+      .bundles-grid > div {
+        flex: 0 0 80vw !important;
+        scroll-snap-align: start;
+        max-width: 80vw;
+      }
       .enterprise-grid { grid-template-columns: 1fr !important; }
+      .price-card { padding: 22px 18px; }
+      .price-features li { font-size: 10pt; padding: 8px 0; }
+      .price-cta { padding: 14px; font-size: 10pt; min-height: 48px; }
 
-      /* Report CTA */
-      .report-cta { padding: 40px 0; }
+      /* -- Report CTA -- */
+      .report-cta { padding: 36px 0; }
       .report-cta h2 { font-size: 18pt; }
       .report-cta p { font-size: 11pt; }
 
-      /* Contact / portal */
+      /* -- Contact / portal -- */
       .portal-links { flex-direction: column; align-items: center; }
-      .portal-link { width: 100%; max-width: 300px; text-align: center; }
+      .portal-link {
+        width: 100%; max-width: 320px;
+        text-align: center; min-height: 48px;
+        display: flex; align-items: center; justify-content: center;
+      }
 
-      /* Footer */
-      footer { padding: 24px 0; font-size: 9pt; }
+      /* -- Footer -- */
+      footer { padding: 24px 16px; }
+      footer p { font-size: 9pt; }
+
+      /* -- Hide desktop header on mobile (replaced by mobile-nav) -- */
+      header { position: relative; }
     }
   `;
 
@@ -415,6 +634,17 @@ export default async function Home() {
           </div>
         </div>
       </header>
+
+      {/* Mobile Section Nav */}
+      <nav className="mobile-nav" style={{ display: "none" }}>
+        <a href="#models">Data</a>
+        <a href="#domains">Domains</a>
+        <a href="#judges">Judges</a>
+        <a href="#governance">Governance</a>
+        <a href="#projections">Projections</a>
+        <a href="#pricing">Pricing</a>
+        <a href="mailto:info@sentientindexlabs.com">Demo</a>
+      </nav>
 
       {/* Hero */}
       <section className="hero">
@@ -596,6 +826,7 @@ export default async function Home() {
           <div className="models-grid">
             {withData.map(m => <ModelCard key={m.modelId} m={m} />)}
           </div>
+          <div className="scroll-hint" style={{ display: "none" }}>Swipe to see all {withData.length} models</div>
           <div className="data-freshness">
             Scores shown are randomized samples for demonstration purposes. Subscribe for real evaluation data.
           </div>
@@ -617,10 +848,12 @@ export default async function Home() {
               fontSize: "80pt", fontWeight: 900, color: "rgba(220, 38, 38, 0.08)",
               letterSpacing: 16, pointerEvents: "none", whiteSpace: "nowrap", zIndex: 1,
             }}>SAMPLE</div>
+            <details className="m-collapse" open>
+            <summary>Judge Agreement Analysis</summary>
+            <div className="collapse-body">
             <div className="container" style={{ position: "relative", zIndex: 2 }}>
               <div className="section-header">
-                <h2>Judge Agreement Analysis</h2>
-                <p>Four independent AI judges score every test blind. Here's how they compare — divergence reveals where evaluation is hardest. <span style={{ color: "#9333ea", fontWeight: 700 }}>Sample data shown.</span></p>
+                <p>Four independent AI judges score every test blind. Here&apos;s how they compare — divergence reveals where evaluation is hardest. <span style={{ color: "#9333ea", fontWeight: 700 }}>Sample data shown.</span></p>
               </div>
 
               {/* Summary stats row */}
@@ -723,6 +956,8 @@ export default async function Home() {
                 </div>
               )}
             </div>
+            </div>
+            </details>
           </section>
         );
       })()}
@@ -743,6 +978,7 @@ export default async function Home() {
               </div>
             ))}
           </div>
+          <div className="scroll-hint" style={{ display: "none" }}>Swipe to explore all 7 domains</div>
         </div>
       </section>
 
@@ -794,9 +1030,11 @@ export default async function Home() {
           fontSize: "80pt", fontWeight: 900, color: "rgba(220, 38, 38, 0.08)",
           letterSpacing: 16, pointerEvents: "none", whiteSpace: "nowrap", zIndex: 1,
         }}>SAMPLE</div>
+        <details className="m-collapse" open>
+        <summary>Evaluation Governance</summary>
+        <div className="collapse-body">
         <div className="container" style={{ position: "relative", zIndex: 2 }}>
           <div className="section-header">
-            <h2>Evaluation Governance</h2>
             <p>Independent, reproducible, vendor-neutral. Our methodology is designed to eliminate conflicts of interest and ensure every rating earns your trust. <span style={{ color: "#9333ea", fontWeight: 700 }}>Sample framework shown — full governance documentation available to subscribers.</span></p>
           </div>
           {/* Core Principles */}
@@ -951,6 +1189,8 @@ export default async function Home() {
             </div>
           </div>
         </div>
+        </div>
+        </details>
       </section>
 
       {/* Projections */}
