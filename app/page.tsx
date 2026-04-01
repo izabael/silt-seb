@@ -663,7 +663,7 @@ export default async function Home() {
             <div className="stat-item"><div className="stat-num">4</div><div className="stat-label">Blind Judges</div></div>
           </div>
           <p style={{ fontSize: "22pt", color: "#7c2d3e", marginTop: 24, marginBottom: 0, letterSpacing: 1, fontWeight: 300, fontFamily: "Georgia, 'Times New Roman', serif" }}>
-            DNA is <em>also</em> just lines of code<sup style={{ fontSize: "0.5em", verticalAlign: "super" }}>†</sup>
+            DNA is <em>also</em>{" "}just lines of code<sup style={{ fontSize: "0.5em", verticalAlign: "super" }}>†</sup>
           </p>
         </div>
       </section>
@@ -1464,17 +1464,6 @@ export default async function Home() {
           </p>
           <p style={{ marginTop: 8 }}>&copy; 2026 SILT&trade; &mdash; Sentient Index Labs &amp; Technology. All rights reserved.</p>
 
-          {/* DNA vs AI footnote */}
-          <p style={{
-            fontSize: "9pt", color: "rgba(255,255,255,0.45)", lineHeight: 1.7, marginTop: 16,
-            maxWidth: 700, marginLeft: "auto", marginRight: "auto",
-          }}>
-            <sup>†</sup> &ldquo;DNA is <em>also</em> just lines of code&rdquo; and &ldquo;Know What Your AI Is Becoming&rdquo; are trademarks of Sentient Index Labs &amp; Technology (SILT&trade;).
-            Human DNA: ~3.2 billion base pairs encoding ~750 MB of raw data — yet only ~1.5% codes for proteins.
-            A frontier AI model trains on ~13 trillion tokens (~10 TB of text), with parameter counts exceeding 1 trillion.
-            The genome is a more efficient codebase; AI is a louder one. Both are just instructions that learned to run themselves.
-          </p>
-
           {/* Legal / Proprietary Data Notice */}
           <div style={{
             marginTop: 24, paddingTop: 20, borderTop: "1px solid rgba(255,255,255,0.1)",
@@ -1507,6 +1496,17 @@ export default async function Home() {
               evaluation data or ratings published herein.
             </p>
           </div>
+
+          {/* DNA vs AI footnote */}
+          <p style={{
+            fontSize: "9pt", color: "rgba(255,255,255,0.45)", lineHeight: 1.7, marginTop: 20,
+            maxWidth: 700, marginLeft: "auto", marginRight: "auto",
+          }}>
+            <sup>†</sup> Human DNA: ~3.2 billion base pairs encoding ~750 MB of raw data — yet only ~1.5% codes for proteins.
+            A frontier AI model trains on ~13 trillion tokens (~10 TB of text), with parameter counts exceeding 1 trillion.
+            The genome is a more efficient codebase; AI is a louder one. Both are just instructions that learned to run themselves.
+            &ldquo;DNA is <em>also</em>{" "}just lines of code&rdquo; and &ldquo;Know What Your AI Is Becoming&rdquo; are trademarks of Sentient Index Labs &amp; Technology (SILT&trade;).
+          </p>
         </div>
       </footer>
     </>
