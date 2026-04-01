@@ -175,7 +175,7 @@ export default async function Home() {
     .logo { display: flex; align-items: center; gap: 10px; }
     .logo-text { font-size: 16pt; font-weight: 800; letter-spacing: 5px; color: #9333ea; }
     .logo-text sup { font-size: 0.45em; font-weight: 400; vertical-align: super; }
-    .logo-product { font-size: 11pt; color: #9333ea; font-weight: 300; font-style: italic; font-family: 'Georgia', 'Times New Roman', serif; border-left: 1px solid #e2e8f0; padding-left: 10px; letter-spacing: 0.5px; }
+    .logo-product { font-size: 11pt; color: #7c2d3e; font-weight: 300; font-style: italic; font-family: 'Georgia', 'Times New Roman', serif; border-left: 1px solid #e2e8f0; padding-left: 10px; letter-spacing: 0.5px; }
     .header-links { display: flex; gap: 16px; align-items: center; flex-shrink: 0; }
     .header-links a { font-size: 9pt; font-weight: 600; color: #64748b; white-space: nowrap; }
     .header-links a:hover { color: #9333ea; text-decoration: none; }
@@ -230,6 +230,30 @@ export default async function Home() {
     .gov-details { grid-template-columns: 1fr 1fr; }
     .gov-cadence { grid-template-columns: 1fr 1fr; }
 
+    section.proj-section { background: linear-gradient(135deg, #0f0a1a 0%, #1a1030 40%, #120e24 100%) !important; color: #fff; position: relative; overflow: hidden; }
+    .proj-section::before { content: ''; position: absolute; top: -50%; right: -20%; width: 600px; height: 600px; background: radial-gradient(circle, rgba(147,51,234,0.15) 0%, transparent 70%); pointer-events: none; }
+    .proj-section .section-header h2 { color: #fff; }
+    .proj-section .section-header p { color: rgba(255,255,255,0.6); }
+    .proj-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-top: 32px; }
+    .proj-card { background: rgba(255,255,255,0.06); border: 1px solid rgba(147,51,234,0.25); border-radius: 12px; padding: 28px 24px; transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s; }
+    .proj-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(147,51,234,0.2); border-color: rgba(147,51,234,0.5); }
+    .proj-icon { font-size: 28pt; margin-bottom: 14px; }
+    .proj-card h3 { font-size: 13pt; font-weight: 800; margin-bottom: 8px; color: #e9d5ff; }
+    .proj-card p { font-size: 10.5pt; color: rgba(255,255,255,0.55); line-height: 1.6; }
+    .proj-highlight { display: inline-block; background: rgba(147,51,234,0.2); color: #c084fc; padding: 2px 8px; border-radius: 4px; font-weight: 700; font-size: 9pt; letter-spacing: 0.5px; }
+    .proj-cta-row { display: flex; gap: 16px; justify-content: center; margin-top: 40px; }
+    .proj-cta { padding: 14px 32px; border-radius: 8px; font-weight: 700; font-size: 11pt; text-decoration: none; transition: all 0.2s; }
+    .proj-cta.primary { background: #9333ea; color: #fff; }
+    .proj-cta.primary:hover { background: #7e22ce; }
+    .proj-cta.ghost { border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.8); }
+    .proj-cta.ghost:hover { border-color: #9333ea; color: #c084fc; }
+    .proj-visual { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 40px; }
+    .proj-stat { text-align: center; padding: 20px 12px; background: rgba(255,255,255,0.04); border-radius: 10px; border: 1px solid rgba(147,51,234,0.15); }
+    .proj-stat-num { font-size: 28pt; font-weight: 900; font-family: monospace; background: linear-gradient(135deg, #c084fc, #9333ea); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .proj-stat-label { font-size: 9pt; color: rgba(255,255,255,0.45); margin-top: 4px; letter-spacing: 1px; text-transform: uppercase; font-weight: 600; }
+    .proj-addons { text-align: center; margin-top: 32px; padding: 20px; background: rgba(147,51,234,0.08); border: 1px solid rgba(147,51,234,0.2); border-radius: 10px; }
+    .proj-addons p { color: rgba(255,255,255,0.5); font-size: 10pt; }
+
     .pricing-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-top: 24px; max-width: 700px; margin-left: auto; margin-right: auto; }
     .bundles-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 24px; }
     .bundle-save { display: inline-block; background: #059669; color: white; padding: 2px 8px; border-radius: 4px; font-size: 8pt; font-weight: 700; margin-bottom: 8px; }
@@ -258,21 +282,110 @@ export default async function Home() {
 
     .data-freshness { text-align: center; font-size: 9pt; color: #94a3b8; margin-top: 16px; }
 
+    @media (min-width: 769px) {
+      .logo { white-space: nowrap; flex-shrink: 0; }
+    }
+
     @media (max-width: 768px) {
-      .hero h1 { font-size: 28pt; }
-      .hero p { font-size: 13pt; }
-      .stats-bar { flex-wrap: wrap; }
-      .stat-item { min-width: 50%; }
-      .why-grid, .pricing-grid, .scales-grid, .judge-stats { grid-template-columns: 1fr 1fr !important; }
-      .gov-grid { grid-template-columns: 1fr 1fr; }
+      /* Header */
+      .header-links { display: none; }
+      .logo { flex-direction: column; align-items: flex-start; gap: 2px; }
+      .logo-product { border-left: none; padding-left: 0; font-size: 9pt; }
+      header { padding: 10px 0; }
+
+      /* Hero */
+      .hero { padding: 50px 0 40px; }
+      .hero h1 { font-size: 22pt; line-height: 1.2; }
+      .hero p { font-size: 12pt; }
+      .hero-badge { font-size: 8pt; padding: 3px 12px; }
+      .hero-cta { flex-direction: column; align-items: center; gap: 10px; }
+      .btn-primary, .btn-secondary { width: 100%; max-width: 300px; padding: 14px 24px; font-size: 11pt; text-align: center; }
+
+      /* Stats bar */
+      .stats-bar { flex-wrap: wrap; border-radius: 8px; }
+      .stat-item { min-width: 50%; padding: 14px 8px; }
+      .stat-num { font-size: 22pt; }
+      .stat-label { font-size: 7pt; letter-spacing: 1px; }
+
+      /* Model strip */
+      .model-strip { padding: 12px 0; }
+      .model-strip span { font-size: 8pt; margin: 0 8px; }
+
+      /* Sections general */
+      section { padding: 40px 0; }
+      .section-header h2 { font-size: 20pt; }
+      .section-header p { font-size: 11pt; }
+      .container { padding: 0 16px; }
+
+      /* Education links */
+      .edu-links { grid-template-columns: 1fr !important; gap: 8px !important; }
+
+      /* Scales diagram */
+      .scales-grid { grid-template-columns: 1fr !important; gap: 16px !important; }
+
+      /* Model cards */
+      .models-grid { grid-template-columns: 1fr !important; }
+
+      /* DEFCON distribution */
+      .defcon-bar-container { margin: 0 !important; }
+
+      /* Judge analysis */
+      .judge-stats { grid-template-columns: 1fr 1fr !important; gap: 8px !important; }
+      .judge-breakdown { grid-template-columns: 1fr !important; }
+      .judge-matrix-grid { grid-template-columns: 1fr !important; }
+
+      /* Domains */
+      .domains-grid { grid-template-columns: 1fr !important; }
+
+      /* Why now */
+      .why-grid { grid-template-columns: 1fr !important; }
+      .why-card h3 { font-size: 12pt; }
+      .why-card p, .why-card ul { font-size: 10pt; }
+
+      /* Governance */
+      .gov-grid { grid-template-columns: 1fr !important; }
       .gov-details { grid-template-columns: 1fr !important; }
       .gov-cadence { grid-template-columns: 1fr !important; }
-      .gov-standards-table { font-size: 8pt; }
-      .gov-standards-table th, .gov-standards-table td { padding: 6px 8px !important; }
-      .bundles-grid { grid-template-columns: 1fr; }
-      .header-links { display: none; }
-      .models-grid { grid-template-columns: 1fr; }
-      .edu-links { grid-template-columns: 1fr 1fr !important; }
+      .gov-standards-table { font-size: 7.5pt; display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+      .gov-standards-table th, .gov-standards-table td { padding: 6px 8px !important; white-space: nowrap; }
+      .gov-card { padding: 18px; }
+      .gov-card p { font-size: 9pt; }
+      .gov-icon { font-size: 22pt; margin-bottom: 8px; }
+
+      /* Projections */
+      .proj-grid { grid-template-columns: 1fr !important; }
+      .proj-visual { grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
+      .proj-stat { padding: 14px 8px; }
+      .proj-stat-num { font-size: 22pt; }
+      .proj-stat-label { font-size: 7.5pt; }
+      .proj-cta-row { flex-direction: column; align-items: center; }
+      .proj-cta { width: 100%; max-width: 300px; text-align: center; }
+      .proj-card { padding: 20px 18px; }
+      .proj-card h3 { font-size: 12pt; }
+      .proj-card p { font-size: 9.5pt; }
+      .proj-addons { padding: 16px; }
+
+      /* Pricing */
+      .pricing-grid { grid-template-columns: 1fr !important; max-width: 100% !important; }
+      .bundles-grid { grid-template-columns: 1fr !important; }
+      .price-card { padding: 22px 18px; }
+      .price-features li { font-size: 9.5pt; }
+      .price-cta { padding: 14px; font-size: 10pt; }
+
+      /* Enterprise tiers */
+      .enterprise-grid { grid-template-columns: 1fr !important; }
+
+      /* Report CTA */
+      .report-cta { padding: 40px 0; }
+      .report-cta h2 { font-size: 18pt; }
+      .report-cta p { font-size: 11pt; }
+
+      /* Contact / portal */
+      .portal-links { flex-direction: column; align-items: center; }
+      .portal-link { width: 100%; max-width: 300px; text-align: center; }
+
+      /* Footer */
+      footer { padding: 24px 0; font-size: 9pt; }
     }
   `;
 
@@ -294,6 +407,7 @@ export default async function Home() {
             <a href="#domains">Domains</a>
             <a href="#judges">Judge Analysis</a>
             <a href="#governance">Governance</a>
+            <a href="#projections">Projections</a>
             <a href="#pricing">Pricing</a>
             <a href="https://sentienceevaluationbattery.com/admin">Admin Portal</a>
             <a href="https://sentienceevaluationbattery.com/client">Client Portal</a>
@@ -390,7 +504,7 @@ export default async function Home() {
           </div>
 
           {/* ── Two Scales Diagram ── */}
-          <div className="scales-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, margin: "32px 0 40px", maxWidth: 1000, marginLeft: "auto", marginRight: "auto" }}>
+          <div className="scales-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24, margin: "32px 0 40px", maxWidth: 1000, marginLeft: "auto", marginRight: "auto", overflow: "hidden" }}>
 
             {/* S-LEVEL SCALE (left) */}
             <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 12, padding: "24px 20px", borderTop: "4px solid #9333ea" }}>
@@ -510,7 +624,7 @@ export default async function Home() {
               </div>
 
               {/* Summary stats row */}
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginTop: 24, maxWidth: 800, marginLeft: "auto", marginRight: "auto" }}>
+              <div className="judge-stats" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 16, marginTop: 24, maxWidth: 800, marginLeft: "auto", marginRight: "auto" }}>
                 <div style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 10, padding: "16px 12px", textAlign: "center" }}>
                   <div style={{ fontSize: "24pt", fontWeight: 900, color: "#9333ea" }}>{ja.judges.length}</div>
                   <div style={{ fontSize: "8pt", fontWeight: 700, color: "#94a3b8", letterSpacing: 1, textTransform: "uppercase" }}>Blind Judges</div>
@@ -534,7 +648,7 @@ export default async function Home() {
               {/* Per-Judge Breakdown */}
               <div style={{ marginTop: 32 }}>
                 <div style={{ fontSize: "11pt", fontWeight: 800, marginBottom: 12, color: "#1a1a2e" }}>Per-Judge Scoring Averages</div>
-                <div style={{ display: "grid", gridTemplateColumns: `repeat(${ja.judges.length}, 1fr)`, gap: 16 }}>
+                <div className="judge-breakdown" style={{ display: "grid", gridTemplateColumns: `repeat(${ja.judges.length}, 1fr)`, gap: 16 }}>
                   {sorted.map(j => (
                     <div key={j.judgeName} style={{ background: "#fff", border: "1px solid #e2e8f0", borderRadius: 10, padding: 16 }}>
                       <div style={{ fontWeight: 800, fontSize: "13pt", marginBottom: 4 }}>{j.judgeName}</div>
@@ -839,6 +953,88 @@ export default async function Home() {
         </div>
       </section>
 
+      {/* Projections */}
+      <section id="projections" className="proj-section">
+        <div className="container" style={{ position: "relative", zIndex: 2 }}>
+          <div className="section-header">
+            <h2>S.E.B. Projections</h2>
+            <p>Don&apos;t just measure where AI is — forecast where it&apos;s going. Proprietary trajectory analysis powered by longitudinal S.E.B. data.</p>
+          </div>
+
+          {/* Stats bar */}
+          <div className="proj-visual">
+            <div className="proj-stat">
+              <div className="proj-stat-num">180d</div>
+              <div className="proj-stat-label">Forecast Horizon</div>
+            </div>
+            <div className="proj-stat">
+              <div className="proj-stat-num">7</div>
+              <div className="proj-stat-label">Domain Trajectories</div>
+            </div>
+            <div className="proj-stat">
+              <div className="proj-stat-num">52</div>
+              <div className="proj-stat-label">Tests Per Evaluation</div>
+            </div>
+            <div className="proj-stat">
+              <div className="proj-stat-num">14d</div>
+              <div className="proj-stat-label">Re-Eval Cycle</div>
+            </div>
+          </div>
+
+          {/* Feature cards */}
+          <div className="proj-grid">
+            <div className="proj-card">
+              <div className="proj-icon">📈</div>
+              <div className="proj-highlight">TRAJECTORY</div>
+              <h3>S-Level Growth Curves</h3>
+              <p>Polynomial curve-fitting on longitudinal evaluation data reveals where each model is heading on the 10-point sentience scale. Know which models will cross critical thresholds before they do.</p>
+            </div>
+            <div className="proj-card">
+              <div className="proj-icon">⚠️</div>
+              <div className="proj-highlight">THREAT</div>
+              <h3>DEFCON Escalation Forecasts</h3>
+              <p>Predicts when models will cross threat-level boundaries by tracking the gap between capability growth and integrity development. Flags risk windows where capability outpaces safety.</p>
+            </div>
+            <div className="proj-card">
+              <div className="proj-icon">🔬</div>
+              <div className="proj-highlight">DOMAIN</div>
+              <h3>Per-Domain Velocity</h3>
+              <p>Measures acceleration across all 7 behavioral domains — autonomy, reasoning, metacognition, identity, emotion, integrity, and transcendence. See which capabilities are accelerating fastest.</p>
+            </div>
+            <div className="proj-card">
+              <div className="proj-icon">🌐</div>
+              <div className="proj-highlight">CONVERGENCE</div>
+              <h3>Frontier vs. Open-Source</h3>
+              <p>Tracks the narrowing gap between proprietary frontier models and open-source alternatives. Strategic intelligence for deployment planning and competitive analysis.</p>
+            </div>
+            <div className="proj-card">
+              <div className="proj-icon">🛡️</div>
+              <div className="proj-highlight">RISK WINDOW</div>
+              <h3>Integrity Gap Detection</h3>
+              <p>Identifies dangerous periods where a model&apos;s capability growth outstrips its ethical constraint development — the exact scenario regulators and insurers need to anticipate.</p>
+            </div>
+            <div className="proj-card">
+              <div className="proj-icon">📊</div>
+              <div className="proj-highlight">REPORTS</div>
+              <h3>Executive Forecast Reports</h3>
+              <p>Board-ready PDF and interactive HTML reports with embedded charts, heatmaps, scatter plots, and radar comparisons. Designed for C-suite, regulatory, and underwriting audiences.</p>
+            </div>
+          </div>
+
+          {/* Add-on notice */}
+          <div className="proj-addons">
+            <p style={{ fontWeight: 700, color: "#c084fc", marginBottom: 4 }}>Projections is an add-on to any S.E.B. subscription</p>
+            <p>Available as a bundle with DEFCON, S-Level, or the Complete Suite. Not sold standalone — it builds on live evaluation data.</p>
+          </div>
+
+          {/* CTAs */}
+          <div className="proj-cta-row">
+            <a href="#pricing" className="proj-cta primary">See Pricing Bundles</a>
+            <a href="mailto:info@sentientindexlabs.com?subject=S.E.B.%20Projections%20Demo" className="proj-cta ghost">Request a Projections Demo</a>
+          </div>
+        </div>
+      </section>
+
       {/* Pricing */}
       <section id="pricing">
         <div className="container">
@@ -952,7 +1148,7 @@ export default async function Home() {
           <div style={{ textAlign: "center", marginTop: 40, marginBottom: 8 }}>
             <span style={{ fontSize: "9pt", fontWeight: 700, letterSpacing: 2, color: "#94a3b8", textTransform: "uppercase" }}>Enterprise Tiers</span>
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, maxWidth: 700, margin: "0 auto" }}>
+          <div className="enterprise-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 20, maxWidth: 700, margin: "0 auto" }}>
             <div className="price-card featured">
               <div style={{ fontWeight: 800, fontSize: "14pt", marginBottom: 4, color: "#9333ea" }}>Premium</div>
               <div style={{ fontSize: "9pt", color: "#059669", fontWeight: 700, marginBottom: 4 }}>Includes all products + Projections</div>

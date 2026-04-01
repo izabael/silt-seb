@@ -1,30 +1,41 @@
 # Resume Point — 2026-03-31
 
 ## Current Task
-Header redesign — separated SILT™ link from "Sentience Evaluation Battery" subtitle, restyled, fixed nav spacing. Deployed.
+Added S.E.B. Projections section + comprehensive mobile responsive overhaul. Deployed.
 
 ## State
-- Branch: main, up to date with origin (uncommitted header changes)
-- Deployed to Vercel (silt-seb.com) — live with latest header changes
-- Report: 24 pages, 1.17 MB, Complete Suite edition
+- Branch: main, uncommitted changes in app/page.tsx + app/layout.tsx
+- Deployed to Vercel (silt-seb.com) — live with all changes
+- Dev server may still be running on localhost:3000
 
 ## Completed This Session
-1. ✅ Separated SILT™ (links to siltcloud.com) from "Sentience Evaluation Battery" (no link)
-2. ✅ Restyled subtitle: purple (#9333ea), serif italic (Georgia), weight 300
-3. ✅ Fixed uneven nav spacing: gap 16px, 9pt font, white-space nowrap, flex-shrink 0
-4. ✅ Deployed to Vercel production
+1. ✅ Added "S.E.B. Projections" section between Governance and Pricing
+   - Dark purple gradient background, 6 feature cards, stats bar, CTAs
+   - Explains trajectory forecasting, DEFCON escalation, domain velocity, convergence analysis
+   - Add-on notice clarifying it bundles with other products
+   - "Projections" added to header nav
+2. ✅ Changed "Sentience Evaluation Battery" subtitle color from purple (#9333ea) to dark crimson (#7c2d3e)
+3. ✅ Fixed logo nowrap — only applies on desktop (769px+), wraps naturally on mobile
+4. ✅ Added viewport meta tag (was completely missing — root cause of mobile rendering issues)
+5. ✅ Comprehensive mobile responsive overhaul:
+   - All grids collapse to 1-column on mobile
+   - Hero, stats, buttons all mobile-friendly sizes
+   - Touch-friendly full-width CTAs
+   - Tables get horizontal scroll
+   - Header stacks vertically on mobile
+   - Added classNames to inline-styled grids for media query access
 
 ## Open Bugs
-- None known
+- None confirmed — user needs to test mobile after cache clear
 
 ## Next Steps
-1. Commit header changes to git
+1. Commit these changes to git
 2. Push to origin
-3. Consider expanding model fleet (currently 12 models with sufficient data)
-4. Any further page or report polish
+3. Get user feedback on mobile layout after cache clear
+4. Consider expanding model fleet (currently 12 models)
 
 ## Context
-- Header: SILT™ is an `<a>` to siltcloud.com, subtitle is a plain `<span>` — no longer wrapped in same link
-- Nav spacing fixed with `gap: 24px` on header-inner, `gap: 16px` + `flex-shrink: 0` on header-links
-- Education links go to: code-wakes-up, who-needs-governance, seb-framework, for-your-org
-- Report loads from `~/Desktop/SENTIENCE/S.E.B/backups/seb-backup-2026-03-26_203724.json`
+- Viewport meta was the #1 mobile issue — without it phones rendered at desktop width
+- Several inline-styled grids needed className additions so CSS media queries could override them
+- Projections section content based on actual SEB-PROJECTIONS project capabilities (polynomial curve-fitting, 180d forecasts, 7-domain velocity, etc.)
+- Subtitle color #7c2d3e chosen for dark crimson feel vs the purple SILT™ branding
