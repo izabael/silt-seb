@@ -9,3 +9,4 @@
 - [Sample Report V3](sample_report_v3.md) — 24-page Complete Suite edition with Projections, deployed 2026-03-31
 - [Projections Section](projections_section.md) — S.E.B. Projections explainer added between Governance and Pricing
 - [Mobile Responsive](mobile_responsive.md) — viewport meta + comprehensive mobile CSS overhaul
+- [Mobile Redesign v2](mobile_redesign_v2.md) — carousels, collapsible sections, sticky nav (2026-03-31)
