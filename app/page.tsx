@@ -163,6 +163,18 @@ export default async function Home() {
   }
 
   const css = `
+    @keyframes sweepRight { 0% { left: -20% } 100% { left: 120% } }
+    @keyframes sweepLeft { 0% { right: -20% } 100% { right: 120% } }
+    @keyframes logoSwish {
+      0% { background-position: 200% 50%; }
+      100% { background-position: -100% 50%; }
+    }
+
+    .sweep-red { position: relative; height: 4px; background: #0f0a1a; overflow: hidden; }
+    .sweep-red::after { content: ''; position: absolute; top: 0; height: 100%; width: 12%; background: linear-gradient(90deg, transparent, #dc2626, transparent); animation: sweepRight 3s ease-in-out infinite; box-shadow: 0 0 6px #dc2626; }
+    .sweep-blue { position: relative; height: 4px; background: #0f0a1a; overflow: hidden; }
+    .sweep-blue::after { content: ''; position: absolute; top: 0; height: 100%; width: 12%; background: linear-gradient(90deg, transparent, #2563eb, transparent); animation: sweepLeft 3s ease-in-out infinite; box-shadow: 0 0 6px #2563eb; }
+
     * { box-sizing: border-box; margin: 0; padding: 0; }
     a { color: #9333ea; text-decoration: none; }
     a:hover { text-decoration: underline; }
@@ -170,16 +182,17 @@ export default async function Home() {
     section { padding: 60px 0; }
     section:nth-child(even) { background: #ffffff; }
 
-    header { background: #fff; border-bottom: 1px solid #e2e8f0; padding: 14px 0; position: sticky; top: 0; z-index: 100; }
+    header { background: #fff; padding: 14px 0; position: sticky; top: 0; z-index: 100; }
     .header-inner { display: flex; justify-content: space-between; align-items: center; gap: 24px; }
     .logo { display: flex; align-items: center; gap: 10px; }
-    .logo-text { font-size: 16pt; font-weight: 800; letter-spacing: 5px; color: #9333ea; }
+    .logo { background: linear-gradient(90deg, #1a1a2e 0%, #1a1a2e 46%, #dc2626 50%, #1a1a2e 54%, #1a1a2e 100%); background-size: 300% 100%; -webkit-background-clip: text; background-clip: text; animation: logoSwish 7s linear infinite; }
+    .logo-text { font-size: 16pt; font-weight: 800; letter-spacing: 5px; -webkit-text-fill-color: transparent; }
     .logo-text sup { font-size: 0.45em; font-weight: 400; vertical-align: super; }
-    .logo-product { font-size: 11pt; color: #7c2d3e; font-weight: 300; font-style: italic; font-family: 'Georgia', 'Times New Roman', serif; border-left: 1px solid #e2e8f0; padding-left: 10px; letter-spacing: 0.5px; }
+    .logo-product { font-size: 11pt; font-weight: 300; font-style: italic; font-family: 'Georgia', 'Times New Roman', serif; border-left: 1px solid #e2e8f0; padding-left: 10px; letter-spacing: 0.5px; -webkit-text-fill-color: transparent; }
     .header-links { display: flex; gap: 16px; align-items: center; flex-shrink: 0; }
     .header-links a { font-size: 9pt; font-weight: 600; color: #64748b; white-space: nowrap; }
     .header-links a:hover { color: #9333ea; text-decoration: none; }
-    .btn-demo { background: linear-gradient(135deg, #9333ea, #2563eb); color: white !important; padding: 8px 20px; border-radius: 6px; font-weight: 700; font-size: 10pt; transition: opacity 0.2s; }
+    .btn-demo { background: linear-gradient(135deg, #9333ea, #2563eb); color: white !important; padding: 5px 14px; border-radius: 5px; font-weight: 700; font-size: 8pt; transition: opacity 0.2s; line-height: 1; display: inline-flex; align-items: center; position: relative; top: -2px; }
     .btn-demo:hover { opacity: 0.9; text-decoration: none; }
 
     .hero { padding: 80px 0 30px; text-align: center; background: linear-gradient(180deg, #faf5ff 0%, #fafbfc 100%); }
@@ -387,8 +400,9 @@ export default async function Home() {
       .stat-label { font-size: 7.5pt; letter-spacing: 1px; }
 
       /* -- Model strip -- */
-      .model-strip { padding: 10px 0; }
-      .model-strip span { font-size: 8pt; margin: 0 6px; }
+      .model-strip { padding: 14px 0; }
+      .model-strip span { font-size: 8pt; margin: 0 4px; }
+      .sweep-red, .sweep-blue { height: 3px; }
 
       /* -- Education links → horizontal scroll -- */
       .edu-links {
@@ -669,17 +683,20 @@ export default async function Home() {
       </section>
 
       {/* Model Strip */}
+      <div className="sweep-red" />
       <div className="model-strip">
-        <div className="container">
-          <span>Models evaluated:</span>
-          {withData.map((m, i) => (
+        <div style={{ marginBottom: 10, fontSize: "8pt", fontWeight: 700, letterSpacing: 2, color: "rgba(255,255,255,0.4)", textTransform: "uppercase", textAlign: "center" }}>
+          Models subjected to full battery of {data.totalTests} behavioral tests &bull; 7 domains &bull; 4 blind judges
+        </div>
+        <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "4px 24px", maxWidth: 1100, margin: "0 auto", padding: "0 24px" }}>
+          {withData.map((m) => (
             <span key={m.modelId}>
               <strong>{m.name}</strong>
-              {i < withData.length - 1 && <span> | </span>}
             </span>
           ))}
         </div>
       </div>
+      <div className="sweep-blue" />
 
       {/* Education Links */}
       <div className="container" style={{ padding: "20px 0 8px" }}>
