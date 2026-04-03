@@ -58,6 +58,17 @@ This is a **Next.js 16 App Router** site — the public-facing S.E.B. dashboard 
 - **No auth** — this is the public-facing site, all content is freely visible
 - **Inline styles** — no CSS framework, all styling inline
 
+### Cross-project: Education links ↔ siltcloud.com
+
+The 4 education link buttons (above DEFCON section in `app/page.tsx`) deep-link to anchor IDs on `siltcloud.com/silt-education`. The anchor IDs live in `siltcloud/app/components/EducationTabs.tsx`. If section IDs change on siltcloud, update the `key` values in the education links array here. Current mapping:
+
+| silt-seb label | siltcloud anchor ID |
+|---|---|
+| The Code That Wakes Up | `#why-it-matters` |
+| Sectors Requiring AI Governance | `#sectors-governance` |
+| The Sentience Evaluation Battery | `#seb-framework` |
+| Custom AI Governance Training | `#training-contact` |
+
 ### Shared Redis (seb namespace)
 
 - `seb:results` — raw SEB evaluation results (same data as sentienceevaluationbattery.com)
