@@ -13,3 +13,4 @@
 - [Tagline & Trademarks](tagline_trademarks.md) — DNA tagline in hero, both taglines trademarked in footer
 - [Scanner Animations](scanner_animations.md) — red/blue sweeps on model strip, red swish on SILT logo, timing details
 - [Always Push](feedback_always_push.md) — always git push after every commit, don't ask
+- [Education Links](education_links.md) — cross-project anchor IDs between silt-seb and siltcloud education page

@@ -1,24 +1,23 @@
 # Resume Point — 2026-04-02
 
 ## Current Task
-Favicon/icons — done and deployed.
+Education links updated — done and deployed on both silt-seb + siltcloud.
 
 ## State
 - Branch: main, clean (all committed + pushed + deployed)
-- Last deploy: 0fc613c — live at silt-seb.com
+- silt-seb last commit: 6d92b5b — live at silt-seb.com
+- siltcloud last commit: 8db0f4a — live at siltcloud.com
 
 ## Completed This Session
-1. Created favicon.ico (16/32/48 multi-size) from SILT Eye of Horus logo
-2. Created icon.png (512px) for modern browsers
-3. Created apple-icon.png (180px) for Apple devices
-4. White logo on dark navy (#1a1a2e) background
-5. Original SVG was 185KB — used rendered PNGs instead (34KB max)
-6. Next.js App Router auto-discovers these from app/ directory
-7. Committed, pushed, deployed to Vercel
+1. Updated 4 education link labels to match current siltcloud.com/silt-education page
+2. Added anchor IDs to siltcloud EducationTabs.tsx sub-sections (sectors-governance, the-challenge-protocol, get-started)
+3. silt-seb links now deep-link to correct sections via hash anchors
+4. Added cross-project documentation in CLAUDE.md for both projects
+5. Deployed both projects to Vercel
 
 ## Open Bugs
 - Twitter bot workflow failing (GitHub Actions)
-- None on silt-seb.com
+- None on silt-seb.com or siltcloud.com
 
 ## Next Steps
 1. Test mobile on real devices
@@ -26,5 +25,6 @@ Favicon/icons — done and deployed.
 3. Expand model fleet beyond current set
 
 ## Context
-- SILT logo source: ~/Desktop/SENTIENCE/SILT_logo symbol only_2026 (1).svg
+- Education anchor ID mapping documented in both CLAUDE.md files
+- siltcloud has no tests/linting either
 - Always commit + push + deploy
