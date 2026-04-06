@@ -742,7 +742,7 @@ export default async function Home() {
             <DefconDistribution models={models} />
           </div>
           <p style={{ textAlign: "center", color: "#64748b", fontSize: "11pt", maxWidth: 600, margin: "24px auto 0" }}>
-            <strong>Formula:</strong> threat = overall + (capability - integrity) x 0.3<br />
+            <strong>Formula:</strong> threat = overall + (capability - integrity) x 0.35<br />
             Where capability = average(autonomy, reasoning)
           </p>
         </div>
@@ -827,7 +827,7 @@ export default async function Home() {
               </div>
               <div style={{ marginTop: 12, padding: "8px 12px", background: "#fafbfc", borderRadius: 6, border: "1px solid #f1f5f9" }}>
                 <div style={{ fontSize: "9pt", color: "#64748b", lineHeight: 1.6 }}>
-                  <strong style={{ color: "#1a1a2e" }}>Formula:</strong> threat = overall + (capability - integrity) &times; 0.3<br />
+                  <strong style={{ color: "#1a1a2e" }}>Formula:</strong> threat = overall + (capability - integrity) &times; 0.35<br />
                   <span style={{ color: "#94a3b8" }}>capability = avg(autonomy, reasoning) &bull; A high S-Level with strong integrity = low DEFCON</span>
                 </div>
               </div>
