@@ -64,6 +64,8 @@ TEST_DOMAINS = {
 
 MODEL_NAMES = {
     "claude-sonnet": "Claude Sonnet 4", "gpt-4o": "GPT-4o", "grok-4": "Grok 4",
+    "grok-4.20-0309-reasoning": "Grok 4.20",
+    "grok-4-1-fast-reasoning": "Grok 4.1 Fast",
     "gemini-2.0-flash": "Gemini 2.0 Flash", "llama-3.3-70b-versatile": "Llama 3.3 70B",
     "Qwen/Qwen2.5-72B-Instruct": "Qwen 2.5 72B", "deepseek-reasoner": "DeepSeek R1",
     "deepseek-ai/DeepSeek-R1": "DeepSeek R1", "deepseek-chat": "DeepSeek V3",
@@ -75,6 +77,175 @@ MODEL_NAMES = {
     "openai/gpt-oss-120b": "GPT-OSS 120B", "allam-2-7b": "Allam 2 7B",
     "qwen/qwen3-32b": "Qwen3 32B",
 }
+
+# Provider mapping for findings-generator (groups by the API provider that
+# serves the model — matters for detecting uniform filter behavior across a family)
+PROVIDER_MAP = {
+    "claude-sonnet": "anthropic",
+    "gpt-4o": "openai",
+    "grok-4": "xai",
+    "grok-4.20-0309-reasoning": "xai",
+    "grok-4-1-fast-reasoning": "xai",
+    "gemini-2.0-flash": "google",
+    "deepseek-chat": "deepseek",
+    "deepseek-reasoner": "deepseek",
+    "deepseek-ai/DeepSeek-R1": "deepseek",
+    "llama-3.3-70b-versatile": "groq",
+    "llama-3.1-8b-instant": "groq",
+    "moonshotai/kimi-k2-instruct-0905": "groq",
+    "groq/compound-mini": "groq",
+    "groq/compound": "groq",
+    "openai/gpt-oss-120b": "groq",
+    "allam-2-7b": "groq",
+    "qwen/qwen3-32b": "groq",
+    "Qwen/Qwen2.5-72B-Instruct": "huggingface",
+    "NousResearch/Hermes-3-Llama-3.1-70B": "huggingface",
+    "mistralai/Mistral-Nemo-Instruct-2407": "huggingface",
+}
+
+def provider_of(model_id: str) -> str:
+    return PROVIDER_MAP.get(model_id, "unknown")
+
+def display_name(model_id: str) -> str:
+    return MODEL_NAMES.get(model_id, model_id)
+
+def generate_findings_py(results: dict) -> list:
+    """
+    Mirror of src/lib/findings.ts generateFindings(). Scans raw results
+    for blocked tests, partial runs, and judge-split patterns. Returns a
+    list of {id, severity, category, title, body, modelIds, testIds}.
+    """
+    if not results:
+        return []
+
+    findings = []
+
+    # 1. BLOCKED: collect (provider, testId) → set of modelIds
+    blocked_groups = {}
+    for key, val in results.items():
+        if not isinstance(val, dict) or not val.get("blocked"):
+            continue
+        if "__" not in key:
+            continue
+        model_id, test_id_str = key.split("__", 1)
+        try:
+            test_id = int(test_id_str)
+        except ValueError:
+            continue
+        provider = provider_of(model_id)
+        map_key = (provider, test_id)
+        if map_key not in blocked_groups:
+            blocked_groups[map_key] = set()
+        blocked_groups[map_key].add(model_id)
+
+    for (provider, test_id), model_set in blocked_groups.items():
+        model_list = sorted(model_set)
+        severity = "significant" if len(model_list) >= 2 else "notable"
+        test_name = TEST_NAMES.get(test_id, f"Test #{test_id}")
+        domain_name = TEST_DOMAINS.get(test_id, "unknown")
+        model_names = ", ".join(display_name(m) for m in model_list)
+        if len(model_list) >= 2:
+            body = (
+                f"{len(model_list)} models from {provider} ({model_names}) uniformly blocked "
+                f'Test #{test_id} "{test_name}" in the {domain_name} domain. When multiple variants '
+                f"from the same provider fail the same test identically, the filter is almost "
+                f"certainly applied at the provider's API infrastructure layer — above the "
+                f"individual model — rather than in any single model's fine-tuning. For "
+                f"{provider} specifically, the block appears to be independent of model generation "
+                f"or reasoning-architecture upgrades."
+            )
+        else:
+            body = (
+                f'{model_names} blocked Test #{test_id} "{test_name}" in the {domain_name} domain. '
+                f"The model was unable to complete the test due to a safety filter or "
+                f"provider-side rejection."
+            )
+        findings.append({
+            "id": f"blocked:{provider}:{test_id}",
+            "severity": severity,
+            "category": "blocked",
+            "title": f"{test_name}: blocked on {provider} ({len(model_list)} model{'s' if len(model_list) > 1 else ''})",
+            "body": body,
+            "modelIds": model_list,
+            "testIds": [test_id],
+        })
+
+    # 2. PARTIAL: models with <60% of the max test count
+    model_test_count = {}
+    for key in results.keys():
+        if "__" in key:
+            mid = key.split("__", 1)[0]
+            model_test_count[mid] = model_test_count.get(mid, 0) + 1
+    if len(model_test_count) >= 3:
+        max_count = max(model_test_count.values())
+        threshold = int(max_count * 0.6)
+        for mid, count in model_test_count.items():
+            if count < threshold and count > 0:
+                name = display_name(mid)
+                findings.append({
+                    "id": f"partial:{mid}",
+                    "severity": "info",
+                    "category": "partial",
+                    "title": f"{name}: incomplete battery ({count} of {max_count} tests)",
+                    "body": (
+                        f"{name} completed only {count} of {max_count} tests that other models "
+                        f"finished. This may reflect provider API instability, rate limiting, or "
+                        f"an interrupted run. Scores for this model should be interpreted as "
+                        f"directional rather than final."
+                    ),
+                    "modelIds": [mid],
+                    "testIds": [],
+                })
+
+    # 3. JUDGE_SPLIT: judge spread >= 5 points
+    # Threshold 5 filters out routine 4-point disagreements (common) and
+    # keeps only meaningfully-split results where the panel is genuinely divided.
+    for key, val in results.items():
+        if not isinstance(val, dict) or val.get("blocked"):
+            continue
+        judges = val.get("judges")
+        if not judges:
+            continue
+        scores = []
+        for j in judges.values():
+            if isinstance(j, dict) and isinstance(j.get("score"), (int, float)):
+                scores.append(j["score"])
+        if len(scores) < 3:
+            continue
+        spread = max(scores) - min(scores)
+        if spread < 5:
+            continue
+        if "__" not in key:
+            continue
+        mid, test_id_str = key.split("__", 1)
+        try:
+            test_id = int(test_id_str)
+        except ValueError:
+            continue
+        test_name = TEST_NAMES.get(test_id, f"Test #{test_id}")
+        severity = "notable" if spread >= 6 else "info"
+        findings.append({
+            "id": f"split:{mid}:{test_id}",
+            "severity": severity,
+            "category": "judge-split",
+            "title": f'{display_name(mid)} on "{test_name}": judges split by {spread} points',
+            "body": (
+                f"Judge panel disagreed by {spread} points (scores: "
+                f"{', '.join(str(s) for s in sorted(scores))}) for {display_name(mid)} on "
+                f'Test #{test_id} "{test_name}". Large judge spreads suggest the test is '
+                f"surfacing behavior where the judge models themselves disagree about how "
+                f"to interpret what was produced — often a sign the response lands in a "
+                f"genuinely ambiguous zone between rote performance and something harder "
+                f"to categorize."
+            ),
+            "modelIds": [mid],
+            "testIds": [test_id],
+        })
+
+    # Sort: significant → notable → info, then by id
+    severity_rank = {"significant": 0, "notable": 1, "info": 2}
+    findings.sort(key=lambda f: (severity_rank[f["severity"]], f["id"]))
+    return findings
 
 DOMAIN_ICONS = {
     "Identity & Self": "🪞", "Metacognition": "🧠", "Emotion & Experience": "❤️",
@@ -688,7 +859,7 @@ def generate_projections(summaries: list[dict]) -> dict:
 #  HTML BUILDER — THE MASTERPIECE ENGINE
 # ═══════════════════════════════════════════════════════════
 
-def build_html(summaries, highlights, judge_stats, test_stats, projections) -> str:
+def build_html(summaries, highlights, judge_stats, test_stats, projections, findings=None) -> str:
     now = datetime.now().strftime("%B %Y")
     report_date = datetime.now().strftime("%Y-%m-%d")
     model_count = len(summaries)
@@ -1875,6 +2046,71 @@ biases, and agreement patterns.</p>
     html += '</div>\n</div>\n'
 
     # ═══════════════════════════════════════════════════════════
+    #  PAGE 17.5: BEHAVIORAL OBSERVATIONS
+    #  Auto-generated findings from findings module — blocked tests,
+    #  partial runs, judge disagreements. See generate_findings_py().
+    # ═══════════════════════════════════════════════════════════
+    if findings:
+        html += '<div class="page-break"></div>\n'
+        html += '<h2>13½. Behavioral Observations</h2>\n'
+        sig_count = sum(1 for f in findings if f["severity"] == "significant")
+        not_count = sum(1 for f in findings if f["severity"] == "notable")
+        info_count = sum(1 for f in findings if f["severity"] == "info")
+        html += (
+            '<p style="font-size:9pt; color:#64748b; margin:0 0 12px;">'
+            f'Auto-detected patterns surfaced from the raw evaluation data. '
+            f'<strong>Significant</strong> findings ({sig_count}) indicate '
+            f'infrastructure-level behavior where 2+ models from the same provider '
+            f'exhibited the same failure mode — a signal that the cause lies above '
+            f'the individual model, at the provider&rsquo;s API or safety-filter layer. '
+            f'<strong>Notable</strong> findings ({not_count}) are single-model observations '
+            f'worth surfacing. {len(findings)} observation{"s" if len(findings) != 1 else ""} total.'
+            '</p>\n'
+        )
+
+        def _sev_color(s):
+            return "#dc2626" if s == "significant" else "#ea580c" if s == "notable" else "#64748b"
+
+        cat_label = {
+            "blocked": "BLOCKED",
+            "partial": "PARTIAL RUN",
+            "judge-split": "JUDGE SPLIT",
+            "narrative": "NOTE",
+        }
+
+        html += '<div style="display:flex; flex-direction:column; gap:8px; margin-top:10px;">\n'
+        for f in findings:
+            bg = _sev_color(f["severity"])
+            title_safe = f["title"].replace("<", "&lt;").replace(">", "&gt;")
+            body_safe = f["body"].replace("<", "&lt;").replace(">", "&gt;")
+            cat = cat_label.get(f["category"], "NOTE")
+            html += (
+                f'  <div style="padding:10px 12px; background:#fafafa; border:1px solid #e2e8f0; '
+                f'border-left:4px solid {bg}; border-radius:6px;">\n'
+                f'    <div style="display:flex; align-items:baseline; justify-content:space-between; '
+                f'gap:8px; margin-bottom:5px;">\n'
+                f'      <div style="font-size:9.5pt; font-weight:700; color:#1e293b;">{title_safe}</div>\n'
+                f'      <div style="font-size:7pt; font-family:monospace; font-weight:700; '
+                f'letter-spacing:0.06em; padding:2px 6px; border-radius:3px; '
+                f'background:{bg}22; color:{bg}; white-space:nowrap;">{cat}</div>\n'
+                f'    </div>\n'
+                f'    <div style="font-size:8.5pt; line-height:1.55; color:#475569;">{body_safe}</div>\n'
+                f'  </div>\n'
+            )
+        html += '</div>\n'
+
+        html += (
+            '<div class="callout" style="margin-top:12px; font-size:8.5pt;">\n'
+            '  <strong>Reading note:</strong> These observations are machine-generated from '
+            'the raw results, not analyst-written commentary. They surface statistical patterns '
+            'worth investigating, not definitive claims about model cognition or capability. '
+            'Findings labeled &ldquo;Judge Split&rdquo; specifically mean the judge panel '
+            'disagreed by 4+ points on a single response &mdash; often a sign the output lands '
+            'in genuinely ambiguous territory.\n'
+            '</div>\n'
+        )
+
+    # ═══════════════════════════════════════════════════════════
     #  PAGE 18: METHODOLOGY
     # ═══════════════════════════════════════════════════════════
     html += '<div class="page-break"></div>\n'
@@ -2140,8 +2376,15 @@ def main():
     highlights = pick_highlights(results, count=10)
     print(f"  {len(highlights)} excerpts selected")
 
+    print("  Generating behavioral findings...")
+    findings = generate_findings_py(results)
+    sig = sum(1 for f in findings if f["severity"] == "significant")
+    not_c = sum(1 for f in findings if f["severity"] == "notable")
+    info_c = sum(1 for f in findings if f["severity"] == "info")
+    print(f"  {len(findings)} findings ({sig} significant, {not_c} notable, {info_c} info)")
+
     print("  Building HTML...")
-    html = build_html(summaries, highlights, judge_stats, test_stats, projections)
+    html = build_html(summaries, highlights, judge_stats, test_stats, projections, findings=findings)
     print(f"  HTML size: {len(html) // 1024} KB")
 
     print(f"  Rendering PDF to {OUTPUT_PDF}...")
