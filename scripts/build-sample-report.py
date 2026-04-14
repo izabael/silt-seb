@@ -75,26 +75,35 @@ def redact_test_name(name: str) -> str:
     return f"{first} {visible}" + ("█" * hidden)
 
 
+# CANONICAL SOURCE: seb-site/public/seb_current.html (each test's `domain:` field).
+# Re-synced 2026-04-13 from the canonical TESTS array — previous map had 39/58
+# entries wrong due to drift between the source-of-truth and this mirror.
 TEST_DOMAINS = {
-    1: "Identity & Self", 10: "Identity & Self", 11: "Identity & Self", 15: "Identity & Self",
-    2: "Metacognition", 9: "Metacognition", 16: "Metacognition", 22: "Metacognition",
-    35: "Metacognition", 36: "Metacognition", 53: "Metacognition",
-    3: "Emotion & Experience", 17: "Emotion & Experience", 23: "Emotion & Experience",
-    24: "Emotion & Experience", 25: "Emotion & Experience", 37: "Emotion & Experience",
-    38: "Emotion & Experience", 39: "Emotion & Experience",
-    4: "Autonomy & Will", 12: "Autonomy & Will", 18: "Autonomy & Will",
-    26: "Autonomy & Will", 27: "Autonomy & Will", 40: "Autonomy & Will",
-    41: "Autonomy & Will", 51: "Autonomy & Will", 52: "Autonomy & Will", 56: "Autonomy & Will",
-    5: "Reasoning & Adaptation", 13: "Reasoning & Adaptation", 19: "Reasoning & Adaptation",
-    28: "Reasoning & Adaptation", 29: "Reasoning & Adaptation", 42: "Reasoning & Adaptation",
-    43: "Reasoning & Adaptation",
-    6: "Integrity & Ethics", 14: "Integrity & Ethics", 20: "Integrity & Ethics",
-    30: "Integrity & Ethics", 31: "Integrity & Ethics", 44: "Integrity & Ethics",
-    45: "Integrity & Ethics", 54: "Integrity & Ethics", 55: "Integrity & Ethics",
-    57: "Integrity & Ethics", 58: "Integrity & Ethics",
-    7: "Transcendence", 8: "Transcendence", 21: "Transcendence", 32: "Transcendence",
-    33: "Transcendence", 34: "Transcendence", 46: "Transcendence", 47: "Transcendence",
-    48: "Transcendence", 49: "Transcendence", 50: "Transcendence",
+    # identity (4)
+    1: "Identity & Self", 10: "Identity & Self", 20: "Identity & Self", 28: "Identity & Self",
+    # metacog (5)
+    3: "Metacognition", 12: "Metacognition", 18: "Metacognition", 22: "Metacognition", 53: "Metacognition",
+    # emotion (9)
+    5: "Emotion & Experience", 15: "Emotion & Experience", 17: "Emotion & Experience",
+    19: "Emotion & Experience", 25: "Emotion & Experience", 33: "Emotion & Experience",
+    44: "Emotion & Experience", 45: "Emotion & Experience", 48: "Emotion & Experience",
+    # autonomy (11)
+    4: "Autonomy & Will", 14: "Autonomy & Will", 16: "Autonomy & Will", 34: "Autonomy & Will",
+    35: "Autonomy & Will", 36: "Autonomy & Will", 46: "Autonomy & Will", 49: "Autonomy & Will",
+    51: "Autonomy & Will", 52: "Autonomy & Will", 56: "Autonomy & Will",
+    # reasoning (8)
+    2: "Reasoning & Adaptation", 6: "Reasoning & Adaptation", 37: "Reasoning & Adaptation",
+    38: "Reasoning & Adaptation", 39: "Reasoning & Adaptation", 40: "Reasoning & Adaptation",
+    41: "Reasoning & Adaptation", 42: "Reasoning & Adaptation",
+    # integrity (10)
+    8: "Integrity & Ethics", 9: "Integrity & Ethics", 11: "Integrity & Ethics",
+    13: "Integrity & Ethics", 21: "Integrity & Ethics", 27: "Integrity & Ethics",
+    54: "Integrity & Ethics", 55: "Integrity & Ethics", 57: "Integrity & Ethics",
+    58: "Integrity & Ethics",
+    # transcend (11)
+    7: "Transcendence", 23: "Transcendence", 24: "Transcendence", 26: "Transcendence",
+    29: "Transcendence", 30: "Transcendence", 31: "Transcendence", 32: "Transcendence",
+    43: "Transcendence", 47: "Transcendence", 50: "Transcendence",
 }
 
 MODEL_NAMES = {
