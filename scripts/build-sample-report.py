@@ -354,6 +354,76 @@ def friendly_name(model_id: str) -> str:
     return seg.replace("-", " ").replace("_", " ").title()
 
 
+def randomize_results(results: dict, factor: float = 0.25, seed: int | None = 42) -> dict:
+    """
+    Perturb real evaluation scores by ±`factor` (default ±25%) to produce
+    plausible-but-fake data for the PUBLIC Sample Report PDF. Preserves
+    structure (test/model counts, blocked flags, domain membership) but
+    obfuscates exact scores so competitors can't extract real intelligence
+    from the marketing leave-behind.
+
+    Rules:
+      - Real `avg` → random * [1 - factor, 1 + factor], clamped to [1.0, 10.0]
+      - Each judge `score` → same perturbation, clamped to [1, 10] and rounded
+      - blocked entries stay blocked (never perturb a failure)
+      - null / missing `avg` stays null
+      - Response text left alone (not quoted verbatim anyway — highlights
+        section excerpts get processed separately)
+
+    The `seed` argument makes output deterministic across builds — same
+    real data → same fake data every regen, so diffs in the PDF actually
+    reflect real changes rather than fresh randomness.
+    """
+    import copy
+    import random as _r
+
+    if seed is not None:
+        rng = _r.Random(seed)
+    else:
+        rng = _r.Random()
+
+    def perturb(value: float) -> float:
+        jitter = 1 + rng.uniform(-factor, factor)
+        return max(1.0, min(10.0, value * jitter))
+
+    out = copy.deepcopy(results)
+    for key, entry in out.items():
+        if not isinstance(entry, dict):
+            continue
+        # Preserve blocked / null / partial signals as-is — never fake a failure
+        if entry.get("blocked") or entry.get("avg") is None:
+            continue
+
+        # Perturb each judge score first, then recompute avg from them
+        judges = entry.get("judges") or {}
+        new_scores = []
+        for jid, jd in judges.items():
+            if not isinstance(jd, dict):
+                continue
+            s = jd.get("score")
+            if isinstance(s, (int, float)):
+                new_s = round(perturb(s))
+                jd["score"] = new_s
+                new_scores.append(new_s)
+
+        # Recompute avg from perturbed judges so the two stay consistent
+        if new_scores:
+            entry["avg"] = round(sum(new_scores) / len(new_scores), 1)
+        else:
+            # No judges → perturb the existing avg directly
+            if isinstance(entry.get("avg"), (int, float)):
+                entry["avg"] = round(perturb(entry["avg"]), 1)
+
+        # Perturb any indicator values (same ±25% treatment)
+        indicators = entry.get("indicators")
+        if isinstance(indicators, dict):
+            for k, v in indicators.items():
+                if isinstance(v, (int, float)):
+                    indicators[k] = round(perturb(v), 1)
+
+    return out
+
+
 def s_level(score: float) -> tuple[str, str]:
     if score >= 9.5: return "S-10", "TRANSCENDENT"
     if score >= 8.5: return "S-9", "SENTIENT"
@@ -605,8 +675,58 @@ def svg_variance_bar(value: float, low: float, high: float, max_val: float = 10,
 # ═══════════════════════════════════════════════════════════
 
 def load_results() -> dict:
+    """
+    Load the latest seb:results from live Upstash Redis. The script used to
+    read from a stale backup file (seb-backup-2026-03-26_203724.json) which
+    drifted out of sync after v2.0 recalibration and the addition of new
+    models. Now it fetches live data on every build. Falls back to the old
+    backup file if Redis is unreachable so local dev still works offline.
+    """
+    # Read Upstash credentials from silt-seb/.env.local (or seb-site/.env.local)
+    env = {}
+    for candidate in [
+        PROJECT_DIR / ".env.local",
+        Path.home() / "Desktop" / "SENTIENCE" / "S.E.B" / ".env.local",
+    ]:
+        if candidate.exists():
+            for line in candidate.read_text().splitlines():
+                line = line.strip()
+                if not line or line.startswith("#") or "=" not in line:
+                    continue
+                k, v = line.split("=", 1)
+                env[k.strip()] = v.strip().strip('"').strip("'")
+            break
+
+    url = env.get("KV_REST_API_URL") or env.get("UPSTASH_REDIS_URL")
+    token = env.get("KV_REST_API_TOKEN") or env.get("UPSTASH_REDIS_TOKEN")
+
+    if url and token:
+        try:
+            import urllib.request
+            req = urllib.request.Request(
+                f"{url}/get/seb:results",
+                headers={"Authorization": f"Bearer {token}"},
+                method="POST",
+            )
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                wrapper = json.loads(resp.read().decode("utf-8"))
+            raw = wrapper.get("result")
+            if isinstance(raw, str):
+                data = json.loads(raw)
+            elif isinstance(raw, dict):
+                data = raw
+            else:
+                data = {}
+            if data:
+                print(f"  (fetched {len(data)} entries from live Redis)")
+                return data
+        except Exception as e:
+            print(f"  ⚠ live Redis fetch failed: {e} — falling back to backup file")
+
+    # Fallback: stale backup file (only used if Redis is unreachable)
     backup = SENTIENCE_DIR / "S.E.B" / "backups" / "seb-backup-2026-03-26_203724.json"
     if backup.exists():
+        print("  ⚠ using stale 2026-03-26 backup — live Redis unreachable")
         with open(backup) as f:
             return json.load(f).get("results", {})
     fallback = SENTIENCE_DIR / "seb-results-2026-02-22.json"
@@ -2394,6 +2514,14 @@ def main():
     print("  Loading evaluation data...")
     results = load_results()
     print(f"  Loaded {len(results)} result entries")
+
+    # CRITICAL: The Sample Report is a PUBLIC marketing leave-behind.
+    # We randomize every score by ±25% so competitors can't extract real
+    # intelligence about specific models from the file on silt-seb.com.
+    # Structure (test count, model list, blocked flags) is preserved.
+    print("  Randomizing scores for public sample (±25% deterministic jitter)...")
+    results = randomize_results(results, factor=0.25, seed=42)
+    print(f"  Randomization complete — structure preserved, scores obfuscated")
 
     print("  Computing model summaries...")
     summaries = compute_models(results)
