@@ -18,8 +18,12 @@ Repo migration housekeeping. silt-seb was transferred from `izabael/` to `silt-t
    - silt-tech/ copies are canonical (30+ commits, built-out)
 5. **Archived** `izabael/seb-demos` and `izabael/seb-projections` via PATCH /repos (not deleted — user preferred archive). Descriptions updated to point at silt-tech canonicals.
 
+## Merged
+- **PR #1 merged to main** at 2026-04-22T20:11 — merge SHA `c03004c`. All 9 stacked commits landed (Grok 4.20 + Grok 4.1 Fast, /press nav, landing v2.0 catch-up, Sample Report PDF overhaul, CLAUDE.md repo-path update). Branch `izabael/add-grok-4.20` deleted on remote + local.
+
 ## Open Action (needs human)
-- **Vercel reconnect** — after the silt-seb transfer, Vercel's GitHub integration for auto-deploy-on-push likely broke. CLI deploys (`vercel --prod`) keep working; auto-deploy does not until reconnected at https://vercel.com/izabael/silt-seb/settings/git
+- **Deploy to Vercel** — main has 10 unshipped commits (9 from PR #1 + the RESUME.md update). Run `vercel --prod` to ship. GitHub auto-deploy is broken post-transfer and won't fire.
+- **Vercel reconnect — DECIDED NOT TO FIX**. Human confirmed the integration break doesn't matter for their workflow: they ship via `vercel --prod` CLI, don't use PR preview URLs. Leave GitHub integration broken.
 
 ## Deferred (per user — "leave 2 and 3 alone")
 User explicitly said NOT to touch these this session:
