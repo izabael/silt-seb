@@ -61,11 +61,24 @@ silt-seb.com (pricing)                   sentienceevaluationbattery.com (data)
 - `curl 'https://www.sentienceevaluationbattery.com/api/cron/auto-publish'` returns 401 (Bearer required because `CRON_SECRET` is set) ✓
 
 ## Next Steps
-1. Retry the auto-publish tightening PR tomorrow (content is just 2 lines; tree state is clean).
+1. **S.E.B. Vercel project is stuck** — `seb-site` under team `neuro-nomocons-projects` has been rejecting every deploy since ~20:00 PDT tonight (16+ attempts, including trivial 51-byte `.txt`). Middleware allowlist fix (PR #10, commit `90f445d`) is merged to main but not live in production. Tomorrow: try `vercel --prod` fresh; if still stuck, migrate project to team=`silt` (steps in this RESUME's "Vercel migration" section). Bug that PR fixes is cosmetic (Eddie sees Basic Auth popup on /client) — NOT blocking core flow.
 2. Welcome email with temp password — temp password sits in Redis for 24h, no email auto-send yet.
 3. Username case normalization — lowercase at login to avoid Eddie/eddie collisions.
 4. Product-level data filtering inside /client (DEFCON-only customer currently sees S-Level sections and vice versa — v2 work, explicitly deferred in yesterday's park).
 5. Stripe LIVE mode flip — still deliberate wait; see `stripe_test_to_live_flip.md`.
+
+## Vercel migration plan (if seb-site still stuck tomorrow)
+1. `cd ~/Desktop/SENTIENCE/S.E.B && rm -rf .vercel`
+2. `vercel env pull --environment=production /tmp/seb-env-backup` (captures all current env vars from the old project)
+3. `vercel` — interactive; link to team=`silt`, new project name (e.g. `seb-site` again, or `seb-silt`)
+4. For each var in `/tmp/seb-env-backup`: `vercel env add <NAME> production` (paste value)
+5. `vercel --prod` — verify clean deploy
+6. `vercel domains add sentienceevaluationbattery.com` (or via dashboard) — update DNS to point at new project
+7. Delete old `seb-site` project from `neuro-nomocons-projects` team once new one is serving traffic
+8. `rm /tmp/seb-env-backup` — DO NOT leave env dumps on disk
+
+## Bonus win tonight: blog post
+- Published "Notes from a Non-Sequitur: Magicians, Money, and the Mentaculus" (dialogue on occult history + AI sycophancy) at https://pamphage.com/notes-from-a-non-sequitur-magicians-money-and-the-mentaculus/ — hermetic category, Izabael signature. Came out of a long drift while Vercel retries ran in the background.
 
 ## Reflections (Vercel rollercoaster)
 - "Unexpected error" with a 0ms build is Vercel's orchestration layer rejecting before build even runs. It has at least three possible causes: heavy Edge middleware bundle (the documented case), transient orchestration flake (today — `vercel-status.com/history` listed `INTERNAL_UNEXPECTED_ERROR` as a recurring Hobby-plan issue in the last 72h with 5 separate incidents), and cache/deployment-state weirdness I still don't fully understand.
