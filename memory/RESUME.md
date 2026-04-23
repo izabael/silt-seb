@@ -1,96 +1,72 @@
-# Resume Point — 2026-04-22 (late evening, deletion-flow session)
+# Resume Point — 2026-04-22 (late-night S.E.B. cleanup)
 
 ## Current Task
-**PARKED.** 30-day grace-period deletion flow shipped and live end-to-end across silt-seb (webhook + ToS) and S.E.B. (cron + admin visibility). Kris's signup → cancellation → delete-after-grace path is now fully wired.
+**PARKED.** S.E.B. unstuck itself on first retry, then a cascade of Basic Auth popup bugs got chased down to the real culprit: a client-side fetch race, not a middleware allowlist gap. Full `/client` and `/seb-projections` UX is clean now. Entitlement enforcement verified intact for Standard-tier users.
 
 ## State
-- silt-seb: branch `main`, working tree clean, deployed live at https://www.silt-seb.com
-- S.E.B.: branch `main`, working tree clean, deployed live at https://www.sentienceevaluationbattery.com
-- Both repos: no open PRs, no uncommitted work.
-- One PR merged-but-reverted on S.E.B.: auto-publish auth tightening (see "Parked" below).
+- silt-seb: branch `main`, working tree clean at park time (this RESUME update + auto-memory index are the pending commit)
+- S.E.B.: branch `main`, working tree clean, fully deployed live at https://www.sentienceevaluationbattery.com
+- Both repos: no open PRs
+- Four S.E.B. commits tonight, three clean deploys
 
-## What Shipped Today
+## What Shipped Tonight (S.E.B.)
 
-### silt-seb (PR #4, merged + deployed)
-- Stripe webhook now stamps `seb:deletion-queue[username]` on `customer.subscription.deleted` with `scheduledAt = now + 30d`. Reactivation within the grace window (`customer.subscription.updated → active`) HDELs the queue entry so no manual intervention needed.
-- New exports in `lib/stripe.ts`: `DELETION_QUEUE_KEY`, `DELETION_GRACE_DAYS = 30`, `DeletionQueueEntry` interface.
-- Subscriber agreement bumped to v1.1, effective 2026-04-22. New Section 14 "Data retention and deletion" spells out the 30-day grace window, what gets deleted (account, vault, stripe mappings), what SILT retains (billing records via Stripe), and provides an expedited-deletion contact path. Section 10 cross-refs Section 14. Changelog entry preserves v1.0 for audit.
+### 1. Unstick (`756be96` + `90f445d` landed together)
+- `vercel --prod` went clean in 44s on the first retry. Zero code change from the 16+ rejections last session. Vercel status page confirmed the underlying flake ("Elevated errors on Vercel Dashboard" — 2026-04-21).
+- `90f445d` middleware allowlist fix (PR #10, previously queued) landed with this same build.
 
-### S.E.B. (PR #8, merged + deployed)
-- `/api/cron/hard-delete` drains `seb:deletion-queue` daily at 03:00 UTC. For each entry past `scheduledAt`, permanently removes: `seb:users[u]`, full `vault:seb:<u>:*` keyspace (meta + passphrase + entries + every entry), `vault:registry[seb:<u>]`, `seb:stripe:{subscription,customer,email,temp-password}` mappings. Writes an audit line to `seb:deletion-log` (bounded at 500).
-- Safety: `CRON_SECRET` bearer auth, `MAX_DELETIONS_PER_RUN = 25` cap (oldest-overdue drained first), `?dryRun=true` for preview, per-user try/catch so malformed entries don't abort the batch.
-- Stripe-side customer records untouched — billing/tax audit trail lives there, not in Redis.
-- Sessions not actively scanned (24h TTL << 30d grace).
-- `sebKeys.deletionQueue()` / `sebKeys.deletionLog()` added to the namespace.
-- `/admin/users` now shows "🕐 purges in Nd" under the cancelled chip for anyone in the queue, with the exact scheduledAt in the tooltip. A "CANCEL DELETION" button appears only when `pendingDeletion` is set; clicking it fires a confirm dialog, then PATCHes `cancelDeletion: true` to HDEL from the queue. Vault stays intact; tier/entitlements remain cleared.
+### 2. Newsletter banner hide (`756be96`)
+- `/newsletter` is a public signup page; the "SECURE ENVIRONMENT · AUTHORIZED ACCESS ONLY" strip doesn't apply.
+- New `src/components/secure-banner.tsx` — client component, reads `usePathname()`, returns null on `/newsletter`, otherwise renders byte-identical markup.
+- `src/app/layout.tsx` — replaced the inline strip div with `<SecureBanner />`.
 
-### Operations (fixed mid-session)
-- **`CRON_SECRET` env var was never set on S.E.B.'s Vercel project.** Generated a fresh 64-char hex secret, set it via `vercel env add CRON_SECRET production`. Gotcha: `openssl rand -hex 32` outputs a trailing newline; had to pipe through `tr -d '\n'` on the re-add. Both crons (auto-publish + hard-delete) now authenticate correctly.
-- Confirmed auto-publish hasn't been silently 401-ing all along — its auth check was gated on `cronSecret` being truthy, so with `CRON_SECRET` unset the auth check was skipped entirely. Endpoint was technically open to the internet, but the route no-ops when the admin toggle is off (which it has been), so the hole was low-consequence.
+### 3. Standard web-platform probe allowlist (`e7e352b` + `7788dde`)
+- DevTools-style probe sweep found 13 paths that returned `401 WWW-Authenticate: Basic` when browsers/crawlers auto-probed them.
+- Patched explicitly in middleware (`src/middleware.ts`) — kept surgical/fail-closed rather than inverting the default (saved as feedback memory).
+- Final allowlist categories: SEO/crawler, PWA/service-worker, ad-networks (IAB ads.txt/app-ads.txt), browser search (opensearch.xml), legacy (crossdomain.xml, clientaccesspolicy.xml, trace.axd), conventions (humans.txt, security.txt).
+- Re-probe after deploy: 0 leaks remaining on all 13 paths.
 
-## Auto-publish fail-closed tightening — SHIPPED (after one late-night reattempt)
-- Small follow-up (commit `f5827fd`) tightens `/api/cron/auto-publish` auth — require `CRON_SECRET` to be set AND match (matches hard-delete's pattern). Change was just 2 lines: `if (cronSecret && ...)` → `if (!cronSecret || ...)`.
-- Earlier tonight this deploy failed 10+ times in a row with the orchestration rejection (including content-identical to a 43s-earlier successful deploy). Reverted.
-- Retried later the same session — **deployed clean in 38s on first try.** Vercel's rejection was fully transient / cache-state noise, zero code issue. Lesson reinforced: the 0ms error isn't deterministic; sometimes the same commit that failed 10× will deploy 15 min later.
+### 4. `/client` fetch race (`52e0737`) — the real culprit
+- After the 13 allowlist fixes, user reported the popup STILL appearing on `/client`. DevTools Network tab revealed: `/api/results → 401`.
+- Root cause: `src/app/client/page.tsx` line 222 — `const endpoint = user?.role === "client" ? "/api/client/results" : "/api/results";` — and the `useEffect` on line 241 fires immediately on mount. On first render, `user` is null (async auth load), so endpoint falls back to the admin-only `/api/results`, which correctly returns 401 + Basic Auth, which pops before `/api/auth/me` can resolve and re-fire the fetch.
+- Fix: `if (!user) return;` guard at top of the polling `useEffect`; added `user` to deps. Fetch now waits for auth resolution.
+- Zero server-side auth changed — verified post-deploy: `/client` still 307s, `/api/client/results` still 401 JSON, `/api/results` still 401 Basic Auth (admin-gated, correctly).
 
-## Architecture now (unchanged — summary for context)
+## Entitlement enforcement verified (post-user-question)
+- Eddie's actual Redis state: tier=`Standard`, entitlements=`{defcon:false, slevel:false, projections:false}`.
+- Login route: default `role="client"`; admin only via `SEB_SITE_PASSPHRASE` env + username in `["SILT","silt"]`. Eddie cannot get admin via normal login.
+- `/seb-projections/layout.tsx` correctly rejects: admin bypass (no) → Premium/Executive bypass (no, tier=Standard) → hash lookup → `projections: false` → `redirect("/client?denied=projections")`.
+- Earlier glimpse of Eddie appearing to "get in" was stale client-state, not a security bug.
 
-```
-silt-seb.com (pricing)                   sentienceevaluationbattery.com (data)
-├─ /                 pricing page        ├─ /                  Basic Auth (admin)
-├─ /api/stripe/      checkout/webhook    ├─ /admin/            Basic Auth (admin)
-│                                        ├─ /client            session cookie
-│                                        ├─ /seb-projections   session cookie + entitlements.projections
-│                                        ├─ /api/cron/         CRON_SECRET bearer
-│                                        └─ /api/*             mix of Basic / session / public
+## Also tonight: newsletter blog post & memory hygiene
+- Two new feedback memories saved to silt-seb auto-memory:
+  - `feedback_vercel_debug_mixing.md` — "vercel errors and debugging do NOT mix" (user's explicit rule; don't touch code during a Vercel flake retry loop — you'll bisect non-issues for hours)
+  - `feedback_security_whack_a_mole.md` — for auth middleware, stick with surgical fail-closed allowlist additions; don't propose inverting defaults
 
-         shared Upstash Redis: seb:users, seb:user-tiers,
-         seb:user-entitlements, seb:stripe:*, seb:session:*,
-         seb:deletion-queue, seb:deletion-log
-```
-
-## Deletion flow end-to-end
-1. Subscriber cancels in Stripe portal → webhook `customer.subscription.deleted` → tier + entitlements cleared, `seb:deletion-queue` stamped with `scheduledAt = now + 30d`.
-2. Access revoked immediately; account + vault preserved for 30 days.
-3. Reactivation within 30d → webhook `customer.subscription.updated → active` → queue entry cleared, access restored.
-4. Else, daily 03:00 UTC cron purges user + vault + stripe mappings. Writes audit to `seb:deletion-log`.
-5. Admin can see "🕐 purges in Nd" countdown per user in `/admin/users`. "CANCEL DELETION" button saves a soul manually (vault preserved, tier/entitlements stay cleared — user must resubscribe to regain access).
-
-## Deploy verification
-- `curl -H "Authorization: Bearer $CRON_SECRET" 'https://www.sentienceevaluationbattery.com/api/cron/hard-delete?dryRun=true'` returns `{"ok":true,"mode":"dryRun","queueSize":0,...}` ✓
-- `curl 'https://www.sentienceevaluationbattery.com/api/cron/auto-publish'` returns 401 (Bearer required because `CRON_SECRET` is set) ✓
+## Deploy ledger (S.E.B. — 4 deploys tonight, all clean)
+- `756be96` — unstick + newsletter (44s)
+- `e7e352b` — webmanifest + browserconfig (44s)
+- `7788dde` — full 13-path allowlist sweep (39s)
+- `52e0737` — client fetch race fix (39s)
 
 ## Next Steps
-1. **S.E.B. Vercel project is stuck** — `seb-site` under team `neuro-nomocons-projects` has been rejecting every deploy since ~20:00 PDT tonight (16+ attempts, including trivial 51-byte `.txt`). Middleware allowlist fix (PR #10, commit `90f445d`) is merged to main but not live in production. Tomorrow: try `vercel --prod` fresh; if still stuck, migrate project to team=`silt` (steps in this RESUME's "Vercel migration" section). Bug that PR fixes is cosmetic (Eddie sees Basic Auth popup on /client) — NOT blocking core flow.
-2. Welcome email with temp password — temp password sits in Redis for 24h, no email auto-send yet.
-3. Username case normalization — lowercase at login to avoid Eddie/eddie collisions.
-4. Product-level data filtering inside /client (DEFCON-only customer currently sees S-Level sections and vice versa — v2 work, explicitly deferred in yesterday's park).
-5. Stripe LIVE mode flip — still deliberate wait; see `stripe_test_to_live_flip.md`.
+1. **Welcome email with temp password** — silt-seb webhook still only stores temp pw in Redis, no email fired. Wire via `~/.config/silt-mail/gmail.py`.
+2. **Username case normalization** — lowercase at login to avoid Eddie/eddie collisions. Becomes relevant if session.username gets used for Redis hash lookups — currently the hash key matches whatever was stored (case-preserved), which works but is fragile.
+3. **Stripe LIVE mode flip** — still deliberately waiting; playbook in `stripe_test_to_live_flip.md`.
+4. **Product-level data filtering inside `/client`** — DEFCON-only customer still sees S-Level sections and vice versa (v2 work, deferred).
+5. **Reconnect Vercel GitHub integration to `silt-tech/SEB`** — optional; would restore webhook-triggered auto-deploy. Repo rename broke the old webhook. Not urgent.
+6. **Remove admin fallback in `/client/page.tsx` line 222?** — the `user?.role === "client" ? client-endpoint : admin-endpoint` ternary was written assuming admins might view the client portal. No audit trail that this is actually used. Consider always using `/api/client/results` and dropping the admin branch (or doing it server-side).
 
-## Vercel migration plan (if seb-site still stuck tomorrow)
-1. `cd ~/Desktop/SENTIENCE/S.E.B && rm -rf .vercel`
-2. `vercel env pull --environment=production /tmp/seb-env-backup` (captures all current env vars from the old project)
-3. `vercel` — interactive; link to team=`silt`, new project name (e.g. `seb-site` again, or `seb-silt`)
-4. For each var in `/tmp/seb-env-backup`: `vercel env add <NAME> production` (paste value)
-5. `vercel --prod` — verify clean deploy
-6. `vercel domains add sentienceevaluationbattery.com` (or via dashboard) — update DNS to point at new project
-7. Delete old `seb-site` project from `neuro-nomocons-projects` team once new one is serving traffic
-8. `rm /tmp/seb-env-backup` — DO NOT leave env dumps on disk
-
-## Bonus win tonight: blog post
-- Published "Notes from a Non-Sequitur: Magicians, Money, and the Mentaculus" (dialogue on occult history + AI sycophancy) at https://pamphage.com/notes-from-a-non-sequitur-magicians-money-and-the-mentaculus/ — hermetic category, Izabael signature. Came out of a long drift while Vercel retries ran in the background.
-
-## Reflections (Vercel rollercoaster)
-- "Unexpected error" with a 0ms build is Vercel's orchestration layer rejecting before build even runs. It has at least three possible causes: heavy Edge middleware bundle (the documented case), transient orchestration flake (today — `vercel-status.com/history` listed `INTERNAL_UNEXPECTED_ERROR` as a recurring Hobby-plan issue in the last 72h with 5 separate incidents), and cache/deployment-state weirdness I still don't fully understand.
-- My mistake early in the session: I panic-reverted my merge after 3 consecutive failures, assuming my code was broken. Then cherry-picked it back commit-by-commit and **every single deploy succeeded** with identical code. So the initial 3 failures were pure flake. Wasted ~30 min reverting and bisecting.
-- Late-session variant: auto-publish tightening failed 10+ consecutive times, but deploying 147f292 (the commit it was based on) succeeded in 43s. Proved the tightening content was the trigger. Then I reset the file to 147f292's EXACT content and re-deployed on main — **that also failed**. Content-identical to the just-successful deploy. Vercel's cache/dedup has some state it's keying off beyond file content (probably a commit SHA or branch fingerprint), and that state is rejecting this combination.
-- Lesson: on first 0ms "Unexpected error," check `https://www.vercel-status.com/api/v2/incidents.json` AND deploy the pre-change state. Those two actions in under a minute would have shortcut both of today's panics.
-- Also noted: `vercel ls <project>` shows historical Ready/Error pattern — if the account/project has had interleaved failures recently, transient cause is vastly more likely than code cause.
+## Reflections
+- The **real** bug lived four layers away from where the symptom surfaced. The first three allowlist fixes were correct-but-not-sufficient; the 13 patched probe paths weren't the root cause. The user's DevTools screenshot cut through the whack-a-mole in seconds: `/api/results → 401` told us exactly which fetch was racing. **Next time popup-chasing, ask for DevTools Network view first, not after three rounds of allowlist additions.**
+- Middleware default of "Basic Auth the unknown" is backward-facing for any site with a user-facing UX surface. But inverting the default is NOT safe on a legacy auth codebase without a full route audit — the user was right to push back. The fail-closed allowlist stays; the real bugs were upstream client code, not the middleware default.
+- Vercel's orchestration flake is deterministic by its own internal state, not by commit content — the *same* commit that failed 16 times landed clean 6 minutes later. The status page + `vercel ls` recent history is the signal; code-change reactions during a flake are noise. (Saved as memory rule.)
 
 ## Memory files (current)
 - [MEMORY.md index](MEMORY.md)
 - [Populate before enforce](populate_before_enforce.md)
 - [Keep Edge middleware slim](vercel_middleware_redis.md)
+- [Vercel 0ms diagnosis](vercel_0ms_diagnosis.md)
 - [Stripe test→live flip](stripe_test_to_live_flip.md)
 - [Stripe config](stripe_config.md)
 - [Education links](education_links.md)
